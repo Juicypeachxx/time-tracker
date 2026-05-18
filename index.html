@@ -108,11 +108,11 @@
             font-size: 16px;
             color: var(--text-main);
             transition: all 0.2s ease;
-            appearance: none;
-            -webkit-appearance: none;
         }
 
         select {
+            appearance: none;
+            -webkit-appearance: none;
             background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%2386868b' d='M0,0 L5,5 L10,0 Z'/></svg>");
             background-repeat: no-repeat;
             background-position: right 12px center;
@@ -176,3 +176,294 @@
             background: rgba(0, 113, 227, 0.1);
             padding: 6px 12px;
             border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-item {
+            background: rgba(120, 120, 128, 0.04);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .task-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-right: 60px;
+        }
+
+        .client-info {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--primary);
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .project-name {
+            font-weight: 600;
+            font-size: 16px;
+            word-break: break-word;
+        }
+
+        .duration {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--success);
+            white-space: nowrap;
+        }
+
+        .task-meta {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin: 4px 0 8px 0;
+        }
+
+        .task-notes {
+            font-size: 14px;
+            background: rgba(120, 120, 128, 0.06);
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: var(--text-main);
+            word-break: break-word;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 69, 58, 0.1);
+            color: var(--danger);
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Sledilnik Časa</h1>
+
+    <div class="card">
+        <form id="timeForm">
+            <div class="form-group">
+                <label for="clientName">Ime Stranke</label>
+                <input type="text" id="clientName" list="existingClients" required placeholder="Izberi ali vpiši stranko">
+                <datalist id="existingClients"></datalist>
+            </div>
+            <div class="form-group">
+                <label for="projectName">Ime Projekta / Opravila</label>
+                <input type="text" id="projectName" required placeholder="npr. Menjava SSD diska, diagnostika...">
+            </div>
+            <div class="form-group">
+                <label for="taskDate">Datum</label>
+                <input type="date" id="taskDate" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="startTime">Začetek</label>
+                    <input type="time" id="startTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="endTime">Konec</label>
+                    <input type="time" id="endTime" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="notes">Opombe</label>
+                <textarea id="notes" placeholder="Dodatne podrobnosti, porabljeni kosi strojne opreme..."></textarea>
+            </div>
+            <button type="submit" class="btn-submit">Zapiši Delovni Čas</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="filter-section">
+            <label for="clientFilter">Prikaži tracker za stranko:</label>
+            <select id="clientFilter">
+                <option value="ALL">-- Vse stranke skupaj --</option>
+            </select>
+        </div>
+
+        <div class="history-header">
+            <h2>Zgodovina</h2>
+            <div id="totalHours" class="total-badge">Skupaj: 0.00 ur</div>
+        </div>
+        <div id="taskList" class="task-list"></div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('taskDate').value = new Date().toISOString().split('T')[0];
+
+    const timeForm = document.getElementById('timeForm');
+    const taskListElement = document.getElementById('taskList');
+    const totalHoursElement = document.getElementById('totalHours');
+    const clientFilter = document.getElementById('clientFilter');
+    const existingClientsDatalist = document.getElementById('existingClients');
+
+    let tasks = JSON.parse(localStorage.getItem('project_tasks')) || [];
+    let currentSelectedFilter = 'ALL';
+
+    function calculateDuration(start, end) {
+        const [startHours, startMins] = start.split(':').map(Number);
+        const [endHours, endMins] = end.split(':').map(Number);
+        
+        let startTotalMinutes = (startHours * 60) + startMins;
+        let endTotalMinutes = (endHours * 60) + endMins;
+
+        if (endTotalMinutes < startTotalMinutes) {
+            endTotalMinutes += 24 * 60;
+        }
+
+        return (endTotalMinutes - startTotalMinutes) / 60;
+    }
+
+    function formatDateSlovenian(dateStr) {
+        if(!dateStr) return '';
+        const parts = dateStr.split('-');
+        if(parts.length !== 3) return dateStr;
+        return `${parts[2]}. ${parts[1]}. ${parts[0]}`;
+    }
+
+    function updateClientFilters() {
+        const clients = [...new Set(tasks.map(t => t.clientName).filter(Boolean))].sort();
+        const previousFilter = clientFilter.value;
+
+        clientFilter.innerHTML = '<option value="ALL">-- Vse stranke skupaj --</option>';
+        clients.forEach(client => {
+            const option = document.createElement('option');
+            option.value = client;
+            option.innerText = client;
+            clientFilter.appendChild(option);
+        });
+
+        existingClientsDatalist.innerHTML = '';
+        clients.forEach(client => {
+            const option = document.createElement('option');
+            option.value = client;
+            existingClientsDatalist.appendChild(option);
+        });
+
+        if (clients.includes(previousFilter)) {
+            clientFilter.value = previousFilter;
+            currentSelectedFilter = previousFilter;
+        } else {
+            clientFilter.value = 'ALL';
+            currentSelectedFilter = 'ALL';
+        }
+    }
+
+    function updateUI() {
+        taskListElement.innerHTML = '';
+        let globalTotalHours = 0;
+
+        const filteredTasks = tasks.filter(task => {
+            if (currentSelectedFilter === 'ALL') return true;
+            return task.clientName === currentSelectedFilter;
+        });
+
+        if (filteredTasks.length === 0) {
+            taskListElement.innerHTML = '<p style="text-align:center; color: var(--text-muted); font-size: 14px; margin: 20px 0;">Ni zabeleženih projektov za izbrano filtracijo.</p>';
+            totalHoursElement.innerText = 'Skupaj: 0.00 ur';
+            return;
+        }
+
+        filteredTasks.forEach((task) => {
+            const hours = calculateDuration(task.startTime, task.endTime);
+            globalTotalHours += hours;
+
+            const originalIndex = tasks.indexOf(task);
+
+            const item = document.createElement('div');
+            item.className = 'task-item';
+            item.innerHTML = `
+                <div class="task-title-row">
+                    <div>
+                        <div class="client-info">${escapeHtml(task.clientName || 'Neznana stranka')}</div>
+                        <div class="project-name">${escapeHtml(task.projectName)}</div>
+                    </div>
+                    <span class="duration">${hours.toFixed(2)} ur</span>
+                </div>
+                <div class="task-meta">
+                    ${formatDateSlovenian(task.taskDate)} • ${task.startTime} do ${task.endTime}
+                </div>
+                ${task.notes ? `<div class="task-notes">${escapeHtml(task.notes)}</div>` : ''}
+                <button class="delete-btn" onclick="deleteTask(${originalIndex})">Briši</button>
+            `;
+            taskListElement.appendChild(item);
+        });
+
+        totalHoursElement.innerText = `Skupaj: ${globalTotalHours.toFixed(2)} ur`;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.innerText = text;
+        return div.innerHTML;
+    }
+
+    timeForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const newTask = {
+            clientName: document.getElementById('clientName').value.trim(),
+            projectName: document.getElementById('projectName').value.trim(),
+            taskDate: document.getElementById('taskDate').value,
+            startTime: document.getElementById('startTime').value,
+            endTime: document.getElementById('endTime').value,
+            notes: document.getElementById('notes').value.trim()
+        };
+
+        tasks.push(newTask);
+        localStorage.setItem('project_tasks', JSON.stringify(tasks));
+        
+        currentSelectedFilter = newTask.clientName;
+        
+        document.getElementById('clientName').value = '';
+        document.getElementById('projectName').value = '';
+        document.getElementById('notes').value = '';
+        
+        updateClientFilters();
+        clientFilter.value = currentSelectedFilter;
+        updateUI();
+    });
+
+    clientFilter.addEventListener('change', (e) => {
+        currentSelectedFilter = e.target.value;
+        updateUI();
+    });
+
+    window.deleteTask = function(index) {
+        if(confirm('Ali ste prepričani, da želite izbrisati ta vnos?')) {
+            tasks.splice(index, 1);
+            localStorage.setItem('project_tasks', JSON.stringify(tasks));
+            updateClientFilters();
+            updateUI();
+        }
+    }
+
+    updateClientFilters();
+    updateUI();
+</script>
+</body>
+</html>
