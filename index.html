@@ -306,6 +306,46 @@
             box-shadow: var(--shadow);
         }
 
+        /* --- ZLOŽLJIV ACCORDION DIZAJN --- */
+        .accordion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            box-shadow: var(--shadow);
+            margin-top: 25px;
+            user-select: none;
+        }
+
+        .accordion-icon {
+            font-size: 12px;
+            color: var(--text-muted);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-top 0.3s ease;
+            opacity: 0;
+        }
+
+        .accordion-container.active .accordion-icon {
+            transform: rotate(90deg);
+        }
+
+        .accordion-container.active .accordion-content {
+            max-height: 400px; /* Dovolj prostora za odprto kartico */
+            margin-top: 12px;
+            opacity: 1;
+        }
+
         .client-list-manage {
             margin-top: 12px;
             max-height: 150px;
@@ -408,16 +448,25 @@
 
         <div id="taskList"></div>
 
-        <div class="card" style="margin-top: 30px;">
-            <h3>📁 Upravljanje Strank</h3>
-            <div class="form-row" style="margin-bottom: 0;">
-                <div class="form-group" style="margin-bottom: 0; flex: 2;">
-                    <input type="text" id="newClientInput" placeholder="Ime nove stranke / podjetja">
-                </div>
-                <button type="button" class="btn-secondary" onclick="addNewClient()">Dodaj</button>
+        <div class="accordion-container" id="settingsAccordion">
+            <div class="accordion-header" onclick="toggleAccordion()">
+                <span>⚙️ Nastavitve in upravljanje strank</span>
+                <span class="accordion-icon">▶</span>
             </div>
             
-            <div class="client-list-manage" id="managedClientList"></div>
+            <div class="accordion-content">
+                <div class="card" style="margin-bottom: 0;">
+                    <h3>📁 Baza Strank</h3>
+                    <div class="form-row" style="margin-bottom: 0;">
+                        <div class="form-group" style="margin-bottom: 0; flex: 2;">
+                            <input type="text" id="newClientInput" placeholder="Ime nove stranke / podjetja">
+                        </div>
+                        <button type="button" class="btn-secondary" onclick="addNewClient()">Dodaj</button>
+                    </div>
+                    
+                    <div class="client-list-manage" id="managedClientList"></div>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -433,6 +482,7 @@
         const existingClientsDatalist = document.getElementById('existingClients');
         const managedClientList = document.getElementById('managedClientList');
         const newClientInput = document.getElementById('newClientInput');
+        const accordionContainer = document.getElementById('settingsAccordion');
 
         let tasks = JSON.parse(localStorage.getItem('project_tasks')) || [];
         let clientDatabase = JSON.parse(localStorage.getItem('client_database')) || [];
@@ -443,6 +493,11 @@
             "Januar", "Februar", "Marec", "April", "Maj", "Junij",
             "Julij", "Avgust", "September", "Oktober", "November", "December"
         ];
+
+        // --- ACCORDION LOGIC ---
+        function toggleAccordion() {
+            accordionContainer.classList.toggle('active');
+        }
 
         // --- THEME LOGIC ---
         function toggleTheme() {
@@ -495,14 +550,13 @@
             return `${d}. ${m}. ${y}`;
         }
 
-        // Izvleče unikatne mesece v obliki "YYYY-MM" za določene vnose
         function getAvailableMonths(filteredTasks) {
             const months = filteredTasks.map(t => {
                 if(!t.taskDate) return null;
                 const [y, m] = t.taskDate.split('-');
                 return `${y}-${m}`;
             }).filter(Boolean);
-            return [...new Set(months)].sort().reverse(); // Najnovejši meseci zgoraj
+            return [...new Set(months)].sort().reverse();
         }
 
         function updateFiltersAndLists() {
@@ -511,7 +565,6 @@
             
             const prevSelectedClient = clientFilter.value;
             
-            // 1. Posodobitev filtra za stranke
             clientFilter.innerHTML = '<option value="ALL">-- Vse stranke skupaj --</option>';
             existingClientsDatalist.innerHTML = '';
             
@@ -534,7 +587,6 @@
                 currentClientFilter = 'ALL';
             }
 
-            // 2. Dinamična posodobitev filtra za mesece na podlagi IZBRANE stranke
             const tasksForMonths = tasks.filter(t => currentClientFilter === 'ALL' || t.clientName === currentClientFilter);
             const availableMonths = getAvailableMonths(tasksForMonths);
             
@@ -559,7 +611,6 @@
                 currentMonthFilter = 'ALL';
             }
 
-            // 3. Izris seznama v nastavitvah strank
             managedClientList.innerHTML = '';
             if (clientDatabase.length === 0) {
                 managedClientList.innerHTML = '<p style="text-align:center; font-size:14px; opacity:0.5; margin: 10px 0;">Baza strank je prazna.</p>';
@@ -578,7 +629,6 @@
             taskListElement.innerHTML = '';
             let total = 0;
 
-            // Dvojno filtriranje: Stranka + Mesec
             const filtered = tasks.filter(t => {
                 const matchClient = (currentClientFilter === 'ALL' || t.clientName === currentClientFilter);
                 let matchMonth = true;
@@ -658,7 +708,6 @@
 
         clientFilter.addEventListener('change', (e) => {
             currentClientFilter = e.target.value;
-            // Ko zamenjamo stranko, ponovno izračunamo mesece in ponastavimo filter meseca na "Vsi"
             updateFiltersAndLists();
             monthFilter.value = 'ALL';
             currentMonthFilter = 'ALL';
@@ -679,7 +728,6 @@
             }
         };
 
-        // Začetni zagon
         updateFiltersAndLists();
         render();
     </script>
