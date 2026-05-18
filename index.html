@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sledilnik Časa</title>
 
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link class="apple-touch-icon" href="apple-touch-icon.png">
 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -251,49 +251,65 @@
             height: 50px;
         }
 
+        /* POPRAVLJEN GUMB ZA MOBILNE NAPRAVE */
         button.btn-export {
             background-color: var(--success);
             color: #FFFFFF;
             border: none;
-            padding: 6px 14px;
-            font-size: 13px;
+            padding: 0 16px;
+            font-size: 14px;
             font-weight: 600;
-            border-radius: 10px;
-            height: 36px;
+            border-radius: 12px;
+            height: 38px;
+            line-height: 38px;
             box-shadow: 0 2px 8px rgba(52, 199, 89, 0.2);
             white-space: nowrap;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-appearance: none;
         }
 
+        /* POPRAVLJENA STRUKTURA GLAVE PODATKOV NA MOBITELU */
         .total-display {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 16px;
             padding: 0 4px;
-            gap: 10px;
-        }
-
-        .total-display-title-row {
-            display: flex;
-            align-items: center;
             gap: 12px;
-            flex-wrap: wrap;
         }
 
         .total-display h2 {
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: 700;
             margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .total-display-buttons-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 12px;
         }
 
         .total-badge {
             background: var(--accent);
             color: #fff;
-            padding: 6px 14px;
+            padding: 0 16px;
             border-radius: 12px;
             font-weight: 700;
             font-size: 14px;
+            height: 38px;
+            line-height: 38px;
             white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
 
         .task-item {
@@ -461,6 +477,7 @@
             height: auto;
         }
 
+        /* PRILAGODITEV ZA VEČJE PROSTORNE EKRANE (DESKTOP) */
         @media screen and (min-width: 768px) {
             .header {
                 max-width: 1024px;
@@ -496,13 +513,28 @@
                 margin-bottom: 0 !important;
             }
 
+            /* Na namizju gre lahko vse spet v eno lepo vrstico */
+            .total-display {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                gap: 16px;
+            }
+
             .total-display h2 {
                 font-size: 24px;
             }
 
-            .total-badge {
-                padding: 8px 18px;
-                font-size: 16px;
+            .total-display-buttons-row {
+                width: auto;
+                justify-content: flex-end;
+                gap: 12px;
+            }
+
+            .total-badge, button.btn-export {
+                height: 42px;
+                line-height: 42px;
+                font-size: 15px;
             }
         }
     </style>
@@ -606,11 +638,11 @@
             </div>
 
             <div class="total-display">
-                <div class="total-display-title-row">
-                    <h2>Zgodovina vnosov</h2>
+                <h2>Zgodovina vnosov</h2>
+                <div class="total-display-buttons-row">
                     <button type="button" class="btn-export" onclick="exportToExcel()">Izvozi v Excel (CSV)</button>
+                    <div id="totalHours" class="total-badge">0.00 ur</div>
                 </div>
-                <div id="totalHours" class="total-badge">0.00 ur</div>
             </div>
 
             <div id="taskList"></div>
