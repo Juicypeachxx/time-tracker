@@ -10,16 +10,16 @@
     
     <style>
         :root {
-            /* Svetla tema (Privzeto) */
+            /* Svetla tema */
             --bg-main: #F2F2F7;
-            --bg-card: rgba(255, 255, 255, 0.8);
+            --bg-card: rgba(255, 255, 255, 0.82);
             --text-main: #1C1C1E;
             --text-muted: #8E8E93;
             --accent: #007AFF;
-            --border: rgba(0, 0, 0, 0.1);
-            --input-bg: rgba(0, 0, 0, 0.05);
+            --border: rgba(0, 0, 0, 0.08);
+            --input-bg: rgba(0, 0, 0, 0.04);
             --card-blur: blur(20px);
-            --shadow: 0 4px 24px rgba(0,0,0,0.08);
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
             --success: #34C759;
             --danger: #FF3B30;
         }
@@ -32,7 +32,7 @@
             --text-muted: #8E8E93;
             --accent: #0A84FF;
             --border: rgba(255, 255, 255, 0.1);
-            --input-bg: rgba(255, 255, 255, 0.1);
+            --input-bg: rgba(255, 255, 255, 0.08);
             --shadow: 0 4px 24px rgba(0,0,0,0.4);
         }
 
@@ -96,10 +96,20 @@
             transform: translateX(22px);
         }
 
+        /* STRUKTURA: Osnovna prilagoditev za mobilne naprave */
         .container {
             width: 100%;
             max-width: 500px;
             padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .left-column, .right-column {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .card {
@@ -141,31 +151,28 @@
 
         .form-row .form-group {
             flex: 1;
-            min-width: 0; /* Prepreči proženje flex-shrink hroščev */
+            min-width: 0;
         }
 
-        /* POPRAVLJENO: Univerzalno oblikovanje vnosnih polj z eksplicitno višino za iOS */
         input, textarea, select {
             width: 100%;
-            height: 50px; /* Fiksna višina prepreči stiskanje in prekrivanje */
+            height: 50px;
             background: var(--input-bg);
             border: none;
             color: var(--text-main);
-            padding: 0 14px; /* Odmik levo/desno, zgoraj/spodaj kontrolira višina */
+            padding: 0 14px;
             border-radius: 12px;
             font-size: 16px;
             outline: none;
             appearance: none;
-            -webkit-appearance: none; /* Odstrani iOS sistemske sence in popačenja */
+            -webkit-appearance: none;
         }
 
-        /* Poseben popravek za tekstovno področje, ki potrebuje poljubno višino */
         textarea {
             height: auto;
             padding: 14px;
         }
 
-        /* POPRAVLJENO: Specifični popravki za iOS datum in čas, da se besedilo lepo centrira */
         input[type="date"],
         input[type="time"] {
             display: flex;
@@ -358,7 +365,7 @@
             font-weight: 600;
             font-size: 15px;
             box-shadow: var(--shadow);
-            margin-top: 25px;
+            margin-top: 10px;
             user-select: none;
         }
 
@@ -411,6 +418,60 @@
             padding: 4px 8px;
             height: auto;
         }
+
+        /* ==========================================================================
+           M1 iPAD AIR / TABLIČNA OPTIMIZACIJA (Zasloni širši od 760px)
+           ==========================================================================
+        */
+        @media screen and (min-width: 768px) {
+            .header {
+                max-width: 1024px;
+                padding: 40px 24px 20px 24px;
+            }
+
+            .header h1 {
+                font-size: 32px; /* Večji napisi na iPadu */
+            }
+
+            .container {
+                max-width: 1024px;
+                padding: 0 24px;
+                display: grid;
+                grid-template-columns: 420px 1fr; /* Leva kolona fiksna za vnos, desna se raztegne */
+                gap: 28px;
+                align-items: start;
+            }
+
+            /* Stranska kolona ostane fiksna zgoraj ob skrolanju dolgih seznamov ur */
+            .left-column {
+                position: sticky;
+                top: env(safe-area-inset-top);
+            }
+
+            .filter-container {
+                margin-bottom: 20px;
+            }
+            
+            /* Prilagoditev filtrov na iPadu, da stojita drug ob drugem */
+            .filter-container {
+                display: flex;
+                gap: 16px;
+            }
+            
+            .filter-container .form-group {
+                flex: 1;
+                margin-bottom: 0 !important;
+            }
+
+            .total-display h2 {
+                font-size: 24px;
+            }
+
+            .total-badge {
+                padding: 8px 18px;
+                font-size: 16px;
+            }
+        }
     </style>
 </head>
 <body data-theme="light">
@@ -422,91 +483,95 @@
 
     <div class="container">
         
-        <div class="card">
-            <form id="timeForm">
-                <div class="form-group">
-                    <label>Stranka</label>
-                    <select id="clientNameSelect" required>
-                        </select>
-                </div>
-                
-                <div class="form-row">
+        <div class="left-column">
+            <div class="card">
+                <form id="timeForm">
                     <div class="form-group">
-                        <label>Lokacija</label>
-                        <input type="text" id="locationName" placeholder="Lokacija">
-                    </div>
-                    <div class="form-group">
-                        <label>Projekt</label>
-                        <input type="text" id="projectName" required placeholder="Projekt">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Datum</label>
-                    <input type="date" id="taskDate" required>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Začetek</label>
-                        <input type="time" id="startTime" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Konec</label>
-                        <input type="time" id="endTime" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Opombe</label>
-                    <textarea id="notes" placeholder="Podrobnosti dela..."></textarea>
-                </div>
-
-                <button type="submit" class="btn-submit">Zapiši Delovni Čas</button>
-            </form>
-        </div>
-
-        <div class="filter-container">
-            <div class="form-group">
-                <label>Filter po stranki</label>
-                <select id="clientFilter">
-                    <option value="ALL">-- Vse stranke skupaj --</option>
-                </select>
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-                <label>Filter po mesecu</label>
-                <select id="monthFilter">
-                    <option value="ALL">-- Vsi meseci --</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="total-display">
-            <h2>Zgodovina</h2>
-            <div id="totalHours" class="total-badge">0.00 ur</div>
-        </div>
-
-        <div id="taskList"></div>
-
-        <div class="accordion-container" id="settingsAccordion">
-            <div class="accordion-header" onclick="toggleAccordion()">
-                <span>⚙️ Nastavitve in upravljanje strank</span>
-                <span class="accordion-icon">▶</span>
-            </div>
-            
-            <div class="accordion-content">
-                <div class="card" style="margin-bottom: 0;">
-                    <h3>📁 Baza Strank</h3>
-                    <div class="form-row" style="margin-bottom: 0;">
-                        <div class="form-group" style="margin-bottom: 0; flex: 2;">
-                            <input type="text" id="newClientInput" placeholder="Ime nove stranke / podjetja">
-                        </div>
-                        <button type="button" class="btn-secondary" onclick="addNewClient()">Dodaj</button>
+                        <label>Stranka</label>
+                        <select id="clientNameSelect" required>
+                            </select>
                     </div>
                     
-                    <div class="client-list-manage" id="managedClientList"></div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Lokacija</label>
+                            <input type="text" id="locationName" placeholder="Lokacija">
+                        </div>
+                        <div class="form-group">
+                            <label>Projekt</label>
+                            <input type="text" id="projectName" required placeholder="Projekt">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Datum</label>
+                        <input type="date" id="taskDate" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Začetek</label>
+                            <input type="time" id="startTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Konec</label>
+                            <input type="time" id="endTime" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Opombe</label>
+                        <textarea id="notes" placeholder="Podrobnosti dela..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit">Zapiši Delovni Čas</button>
+                </form>
+            </div>
+
+            <div class="accordion-container" id="settingsAccordion">
+                <div class="accordion-header" onclick="toggleAccordion()">
+                    <span>⚙️ Nastavitve in upravljanje strank</span>
+                    <span class="accordion-icon">▶</span>
+                </div>
+                
+                <div class="accordion-content">
+                    <div class="card" style="margin-bottom: 0; margin-top: 10px;">
+                        <h3>📁 Baza Strank</h3>
+                        <div class="form-row" style="margin-bottom: 0;">
+                            <div class="form-group" style="margin-bottom: 0; flex: 2;">
+                                <input type="text" id="newClientInput" placeholder="Ime nove stranke / podjetja">
+                            </div>
+                            <button type="button" class="btn-secondary" onclick="addNewClient()">Dodaj</button>
+                        </div>
+                        
+                        <div class="client-list-manage" id="managedClientList"></div>
+                    </div>
                 </div>
             </div>
+        </div>
+
+        <div class="right-column">
+            <div class="filter-container">
+                <div class="form-group">
+                    <label>Filter po stranki</label>
+                    <select id="clientFilter">
+                        <option value="ALL">-- Vse stranke skupaj --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Filter po mesecu</label>
+                    <select id="monthFilter">
+                        <option value="ALL">-- Vsi meseci --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="total-display">
+                <h2>Zgodovina vnosov</h2>
+                <div id="totalHours" class="total-badge">0.00 ur</div>
+            </div>
+
+            <div id="taskList"></div>
         </div>
 
     </div>
@@ -738,7 +803,7 @@
             const selectedClient = clientNameSelect.value;
             
             if (!selectedClient) {
-                alert('Prosimo, izberite stranko. Če je seznam prazen, jo dodajte v nastavitvah spodaj.');
+                alert('Prosimo, izberite stranko. Če je seznam pracen, jo dodajte v nastavitvah spodaj.');
                 return;
             }
             
