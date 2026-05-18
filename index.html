@@ -3,77 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sledilnik Projektnega Časa</title>
+    <title>Sledilnik Časa Pro</title>
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            --card-bg: rgba(255, 255, 255, 0.85);
-            --card-blur: blur(12px);
-            --text-main: #1d1d1f;
-            --text-muted: #86868b;
-            --primary: #0071e3;
-            --primary-hover: #0077ed;
-            --danger: #ff453a;
-            --success: #34c759;
-            --border: rgba(0, 0, 0, 0.08);
-            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            /* Svetla tema (Privzeto) */
+            --bg-main: #F2F2F7;
+            --bg-card: rgba(255, 255, 255, 0.8);
+            --text-main: #1C1C1E;
+            --text-muted: #8E8E93;
+            --accent: #007AFF;
+            --border: rgba(0, 0, 0, 0.1);
+            --input-bg: rgba(0, 0, 0, 0.05);
+            --card-blur: blur(20px);
+            --shadow: 0 4px 24px rgba(0,0,0,0.08);
+            --success: #34C759;
+            --danger: #FF3B30;
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-gradient: linear-gradient(135deg, #141416 0%, #28282b 100%);
-                --card-bg: rgba(28, 28, 30, 0.8);
-                --text-main: #f5f5f7;
-                --text-muted: #86868b;
-                --primary: #0a84ff;
-                --primary-hover: #2291ff;
-                --danger: #ff453a;
-                --success: #32d74b;
-                --border: rgba(255, 255, 255, 0.08);
-            }
+        [data-theme="dark"] {
+            /* Temna tema */
+            --bg-main: #000000;
+            --bg-card: rgba(28, 28, 30, 0.8);
+            --text-main: #FFFFFF;
+            --text-muted: #8E8E93;
+            --accent: #0A84FF;
+            --border: rgba(255, 255, 255, 0.1);
+            --input-bg: rgba(255, 255, 255, 0.1);
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
         }
 
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         body {
-            background: var(--bg-gradient);
+            background-color: var(--bg-main);
             color: var(--text-main);
             margin: 0;
-            padding: 20px 16px env(safe-area-inset-bottom) 16px;
-            min-height: 100vh;
+            padding: 0;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            /* Safe area for iOS */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .header {
+            width: 100%;
+            max-width: 500px;
+            padding: 24px 20px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        /* Dark Mode Toggle Switch */
+        .theme-switch {
+            position: relative;
+            width: 50px;
+            height: 28px;
+            background-color: var(--input-bg);
+            border-radius: 20px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+        }
+
+        .theme-switch::after {
+            content: '☀️';
+            position: absolute;
+            left: 4px;
+            top: 2px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        [data-theme="dark"] .theme-switch::after {
+            content: '🌙';
+            transform: translateX(22px);
         }
 
         .container {
             width: 100%;
-            max-width: 600px;
-            margin-top: env(safe-area-inset-top);
-        }
-
-        h1 {
-            font-size: 28px;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 24px;
-            letter-spacing: -0.5px;
+            max-width: 500px;
+            padding: 16px;
         }
 
         .card {
-            background: var(--card-bg);
+            background: var(--bg-card);
             backdrop-filter: var(--card-blur);
             -webkit-backdrop-filter: var(--card-blur);
             border: 1px solid var(--border);
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 20px;
             box-shadow: var(--shadow);
             margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            margin-left: 4px;
+            text-transform: uppercase;
         }
 
         .form-group {
@@ -89,400 +138,365 @@
             flex: 1;
         }
 
-        label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
         input, textarea, select {
             width: 100%;
-            padding: 12px;
-            background: rgba(120, 120, 128, 0.08);
-            border: 1px solid transparent;
-            border-radius: 10px;
-            font-size: 16px;
+            background: var(--input-bg);
+            border: none;
             color: var(--text-main);
-            transition: all 0.2s ease;
-        }
-
-        select {
-            appearance: none;
-            -webkit-appearance: none;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%2386868b' d='M0,0 L5,5 L10,0 Z'/></svg>");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 10px 6px;
-            padding-right: 30px;
-        }
-
-        input:focus, textarea:focus, select:focus {
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 16px; /* Prevents iOS zoom */
             outline: none;
-            border-color: var(--primary);
-            background: rgba(120, 120, 128, 0.02);
         }
 
-        textarea {
-            resize: none;
-            height: 70px;
+        input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.6;
         }
 
         button.btn-submit {
             width: 100%;
-            background-color: var(--primary);
-            color: white;
+            background-color: var(--accent);
+            color: #FFFFFF;
             border: none;
-            padding: 14px;
-            font-size: 16px;
+            padding: 16px;
+            font-size: 17px;
             font-weight: 600;
-            border-radius: 12px;
+            border-radius: 14px;
+            margin-top: 10px;
             cursor: pointer;
-            transition: opacity 0.2s, transform 0.1s;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
         }
 
         button.btn-submit:active {
-            transform: scale(0.99);
-            opacity: 0.9;
+            opacity: 0.8;
+            transform: scale(0.98);
         }
 
-        .filter-section {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-bottom: 20px;
-        }
-
-        .history-header {
+        .total-display {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
+            padding: 0 4px;
         }
 
-        .history-header h2 {
+        .total-display h2 {
             font-size: 20px;
             font-weight: 600;
             margin: 0;
         }
 
         .total-badge {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--primary);
-            background: rgba(0, 113, 227, 0.1);
-            padding: 6px 12px;
-            border-radius: 20px;
-            white-space: nowrap;
-        }
-
-        .task-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .task-item {
-            background: rgba(120, 120, 128, 0.04);
-            border: 1px solid var(--border);
+            background: var(--accent);
+            color: #fff;
+            padding: 6px 14px;
             border-radius: 12px;
-            padding: 14px;
-            position: relative;
-            animation: fadeIn 0.3s ease;
+            font-weight: 700;
+            font-size: 14px;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
+        /* Task List Items */
+        .task-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .task-title-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            padding-right: 60px;
-        }
-
-        .client-info {
-            font-size: 11px;
+        .task-client {
+            font-size: 12px;
             font-weight: 700;
+            color: var(--accent);
             text-transform: uppercase;
-            color: var(--primary);
-            letter-spacing: 0.5px;
             margin-bottom: 2px;
         }
 
-        .project-name {
-            font-weight: 600;
-            font-size: 16px;
-            word-break: break-word;
+        .task-main-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
         }
 
-        .location-badge {
-            display: inline-block;
-            font-size: 12px;
-            background: rgba(120, 120, 128, 0.1);
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-top: 4px;
-            font-weight: 500;
+        .task-project {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 4px;
         }
 
-        .duration {
-            font-size: 14px;
-            font-weight: 600;
+        .task-duration {
+            font-weight: 700;
             color: var(--success);
-            white-space: nowrap;
+        }
+
+        .task-location {
+            display: inline-flex;
+            align-items: center;
+            font-size: 13px;
+            background: var(--input-bg);
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-bottom: 8px;
         }
 
         .task-meta {
             font-size: 13px;
             color: var(--text-muted);
-            margin: 4px 0 8px 0;
         }
 
         .task-notes {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
             font-size: 14px;
-            background: rgba(120, 120, 128, 0.06);
-            padding: 8px 12px;
-            border-radius: 8px;
+            font-style: italic;
             color: var(--text-main);
-            word-break: break-word;
+            opacity: 0.8;
         }
 
         .delete-btn {
             position: absolute;
-            top: 12px;
-            right: 12px;
-            background: rgba(255, 69, 58, 0.1);
-            color: var(--danger);
+            top: 16px;
+            right: 16px;
+            background: var(--danger);
+            color: white;
             border: none;
             padding: 6px 10px;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
         }
+
+        /* Custom Selector */
+        .client-select-wrapper {
+            margin-bottom: 24px;
+        }
+
+        select#clientFilter {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 12px;
+            font-weight: 600;
+        }
+
     </style>
 </head>
-<body>
+<body data-theme="light">
 
-<div class="container">
-    <h1>Sledilnik Časa</h1>
-
-    <div class="card">
-        <form id="timeForm">
-            <div class="form-group">
-                <label for="clientName">Ime Stranke</label>
-                <input type="text" id="clientName" list="existingClients" required placeholder="Izberi ali vpiši stranko">
-                <datalist id="existingClients"></datalist>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="locationName">Lokacija</label>
-                    <input type="text" id="locationName" placeholder="Lokacija">
-                </div>
-                <div class="form-group">
-                    <label for="projectName">Projekt / Opravilo</label>
-                    <input type="text" id="projectName" required placeholder="Projekt">
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="taskDate">Datum</label>
-                <input type="date" id="taskDate" required>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="startTime">Začetek</label>
-                    <input type="time" id="startTime" required>
-                </div>
-                <div class="form-group">
-                    <label for="endTime">Konec</label>
-                    <input type="time" id="endTime" required>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="notes">Opombe</label>
-                <textarea id="notes" placeholder="Dodatne podrobnosti, porabljeni kosi strojne opreme..."></textarea>
-            </div>
-            <button type="submit" class="btn-submit">Zapiši Delovni Čas</button>
-        </form>
+    <div class="header">
+        <h1>Sledilnik Časa</h1>
+        <div class="theme-switch" id="themeToggle" onclick="toggleTheme()"></div>
     </div>
 
-    <div class="card">
-        <div class="filter-section">
-            <label for="clientFilter">Prikaži tracker za stranko:</label>
+    <div class="container">
+        
+        <div class="card">
+            <form id="timeForm">
+                <div class="form-group">
+                    <label>Stranka</label>
+                    <input type="text" id="clientName" list="existingClients" required placeholder="Ime podjetja ali stranke">
+                    <datalist id="existingClients"></datalist>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Lokacija</label>
+                        <input type="text" id="locationName" placeholder="Lokacija">
+                    </div>
+                    <div class="form-group">
+                        <label>Projekt</label>
+                        <input type="text" id="projectName" required placeholder="Projekt">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Datum</label>
+                    <input type="date" id="taskDate" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Začetek</label>
+                        <input type="time" id="startTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Konec</label>
+                        <input type="time" id="endTime" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Opombe</label>
+                    <textarea id="notes" placeholder="Podrobnosti dela..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit">Zapiši Delovni Čas</button>
+            </form>
+        </div>
+
+        <div class="client-select-wrapper">
+            <label>Filter po stranki</label>
             <select id="clientFilter">
                 <option value="ALL">-- Vse stranke skupaj --</option>
             </select>
         </div>
 
-        <div class="history-header">
+        <div class="total-display">
             <h2>Zgodovina</h2>
-            <div id="totalHours" class="total-badge">Skupaj: 0.00 ur</div>
+            <div id="totalHours" class="total-badge">0.00 ur</div>
         </div>
-        <div id="taskList" class="task-list"></div>
+
+        <div id="taskList"></div>
+
     </div>
-</div>
 
-<script>
-    document.getElementById('taskDate').value = new Date().toISOString().split('T')[0];
+    <script>
+        // Nastavitev današnjega datuma
+        document.getElementById('taskDate').value = new Date().toISOString().split('T')[0];
 
-    const timeForm = document.getElementById('timeForm');
-    const taskListElement = document.getElementById('taskList');
-    const totalHoursElement = document.getElementById('totalHours');
-    const clientFilter = document.getElementById('clientFilter');
-    const existingClientsDatalist = document.getElementById('existingClients');
+        const timeForm = document.getElementById('timeForm');
+        const taskListElement = document.getElementById('taskList');
+        const totalHoursElement = document.getElementById('totalHours');
+        const clientFilter = document.getElementById('clientFilter');
+        const existingClientsDatalist = document.getElementById('existingClients');
 
-    let tasks = JSON.parse(localStorage.getItem('project_tasks')) || [];
-    let currentSelectedFilter = 'ALL';
+        let tasks = JSON.parse(localStorage.getItem('project_tasks')) || [];
+        let currentFilter = 'ALL';
 
-    function calculateDuration(start, end) {
-        const [startHours, startMins] = start.split(':').map(Number);
-        const [endHours, endMins] = end.split(':').map(Number);
-        
-        let startTotalMinutes = (startHours * 60) + startMins;
-        let endTotalMinutes = (endHours * 60) + endMins;
-
-        if (endTotalMinutes < startTotalMinutes) {
-            endTotalMinutes += 24 * 60;
+        // --- THEME LOGIC ---
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme_pref', newTheme);
         }
 
-        return (endTotalMinutes - startTotalMinutes) / 60;
-    }
+        // Nalaganje nastavitev teme
+        const savedTheme = localStorage.getItem('theme_pref') || 'light';
+        document.body.setAttribute('data-theme', savedTheme);
 
-    function formatDateSlovenian(dateStr) {
-        if(!dateStr) return '';
-        const parts = dateStr.split('-');
-        if(parts.length !== 3) return dateStr;
-        return `${parts[2]}. ${parts[1]}. ${parts[0]}`;
-    }
-
-    function updateClientFilters() {
-        const clients = [...new Set(tasks.map(t => t.clientName).filter(Boolean))].sort();
-        const previousFilter = clientFilter.value;
-
-        clientFilter.innerHTML = '<option value="ALL">-- Vse stranke skupaj --</option>';
-        clients.forEach(client => {
-            const option = document.createElement('option');
-            option.value = client;
-            option.innerText = client;
-            clientFilter.appendChild(option);
-        });
-
-        existingClientsDatalist.innerHTML = '';
-        clients.forEach(client => {
-            const option = document.createElement('option');
-            option.value = client;
-            existingClientsDatalist.appendChild(option);
-        });
-
-        if (clients.includes(previousFilter)) {
-            clientFilter.value = previousFilter;
-            currentSelectedFilter = previousFilter;
-        } else {
-            clientFilter.value = 'ALL';
-            currentSelectedFilter = 'ALL';
-        }
-    }
-
-    function updateUI() {
-        taskListElement.innerHTML = '';
-        let globalTotalHours = 0;
-
-        const filteredTasks = tasks.filter(task => {
-            if (currentSelectedFilter === 'ALL') return true;
-            return task.clientName === currentSelectedFilter;
-        });
-
-        if (filteredTasks.length === 0) {
-            taskListElement.innerHTML = '<p style="text-align:center; color: var(--text-muted); font-size: 14px; margin: 20px 0;">Ni zabeleženih projektov za izbrano filtracijo.</p>';
-            totalHoursElement.innerText = 'Skupaj: 0.00 ur';
-            return;
+        // --- CORE LOGIC ---
+        function calculateDuration(start, end) {
+            const [sH, sM] = start.split(':').map(Number);
+            const [eH, eM] = end.split(':').map(Number);
+            let sTotal = sH * 60 + sM;
+            let eTotal = eH * 60 + eM;
+            if (eTotal < sTotal) eTotal += 24 * 60;
+            return (eTotal - sTotal) / 60;
         }
 
-        filteredTasks.forEach((task) => {
-            const hours = calculateDuration(task.startTime, task.endTime);
-            globalTotalHours += hours;
+        function formatDateSlo(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            return `${d}. ${m}. ${y}`;
+        }
 
-            const originalIndex = tasks.indexOf(task);
+        function updateFilters() {
+            const clients = [...new Set(tasks.map(t => t.clientName))].sort();
+            const current = clientFilter.value;
+            
+            clientFilter.innerHTML = '<option value="ALL">-- Vse stranke skupaj --</option>';
+            existingClientsDatalist.innerHTML = '';
+            
+            clients.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.innerText = c;
+                clientFilter.appendChild(opt);
+                
+                const dListOpt = document.createElement('option');
+                dListOpt.value = c;
+                existingClientsDatalist.appendChild(dListOpt);
+            });
+            clientFilter.value = current;
+        }
 
-            const item = document.createElement('div');
-            item.className = 'task-item';
-            item.innerHTML = `
-                <div class="task-title-row">
-                    <div>
-                        <div class="client-info">${escapeHtml(task.clientName || 'Neznana stranka')}</div>
-                        <div class="project-name">${escapeHtml(task.projectName)}</div>
-                        ${task.locationName ? `<div class="location-badge">📍 ${escapeHtml(task.locationName)}</div>` : ''}
+        function render() {
+            taskListElement.innerHTML = '';
+            let total = 0;
+
+            const filtered = tasks.filter(t => currentFilter === 'ALL' || t.clientName === currentFilter);
+
+            if (filtered.length === 0) {
+                taskListElement.innerHTML = '<p style="text-align:center; opacity:0.5;">Ni vnosov.</p>';
+                totalHoursElement.innerText = '0.00 ur';
+                return;
+            }
+
+            filtered.sort((a, b) => new Date(b.taskDate) - new Date(a.taskDate)).forEach(t => {
+                const dur = calculateDuration(t.startTime, t.endTime);
+                total += dur;
+
+                const originalIndex = tasks.indexOf(t);
+                const item = document.createElement('div');
+                item.className = 'task-item';
+                item.innerHTML = `
+                    <div class="task-client">${escape(t.clientName)}</div>
+                    <div class="task-main-info">
+                        <div class="task-project">${escape(t.projectName)}</div>
+                        <div class="task-duration">${dur.toFixed(2)} ur</div>
                     </div>
-                    <span class="duration">${hours.toFixed(2)} ur</span>
-                </div>
-                <div class="task-meta">
-                    ${formatDateSlovenian(task.taskDate)} • ${task.startTime} do ${task.endTime}
-                </div>
-                ${task.notes ? `<div class="task-notes">${escapeHtml(task.notes)}</div>` : ''}
-                <button class="delete-btn" onclick="deleteTask(${originalIndex})">Briši</button>
-            `;
-            taskListElement.appendChild(item);
+                    ${t.locationName ? `<div class="task-location">📍 ${escape(t.locationName)}</div>` : ''}
+                    <div class="task-meta">${formatDateSlo(t.taskDate)} • ${t.startTime} - ${t.endTime}</div>
+                    ${t.notes ? `<div class="task-notes">${escape(t.notes)}</div>` : ''}
+                    <button class="delete-btn" onclick="deleteTask(${originalIndex})">Briši</button>
+                `;
+                taskListElement.appendChild(item);
+            });
+
+            totalHoursElement.innerText = `${total.toFixed(2)} ur`;
+        }
+
+        function escape(s) {
+            let d = document.createElement('div');
+            d.innerText = s;
+            return d.innerHTML;
+        }
+
+        timeForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newTask = {
+                clientName: document.getElementById('clientName').value.trim(),
+                locationName: document.getElementById('locationName').value.trim(),
+                projectName: document.getElementById('projectName').value.trim(),
+                taskDate: document.getElementById('taskDate').value,
+                startTime: document.getElementById('startTime').value,
+                endTime: document.getElementById('endTime').value,
+                notes: document.getElementById('notes').value.trim()
+            };
+            tasks.push(newTask);
+            localStorage.setItem('project_tasks', JSON.stringify(tasks));
+            timeForm.reset();
+            document.getElementById('taskDate').value = new Date().toISOString().split('T')[0];
+            updateFilters();
+            render();
         });
 
-        totalHoursElement.innerText = `Skupaj: ${globalTotalHours.toFixed(2)} ur`;
-    }
+        clientFilter.addEventListener('change', (e) => {
+            currentFilter = e.target.value;
+            render();
+        });
 
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.innerText = text;
-        return div.innerHTML;
-    }
-
-    timeForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const newTask = {
-            clientName: document.getElementById('clientName').value.trim(),
-            locationName: document.getElementById('locationName').value.trim(),
-            projectName: document.getElementById('projectName').value.trim(),
-            taskDate: document.getElementById('taskDate').value,
-            startTime: document.getElementById('startTime').value,
-            endTime: document.getElementById('endTime').value,
-            notes: document.getElementById('notes').value.trim()
+        window.deleteTask = function(i) {
+            if (confirm('Izbrišem ta vnos?')) {
+                tasks.splice(i, 1);
+                localStorage.setItem('project_tasks', JSON.stringify(tasks));
+                updateFilters();
+                render();
+            }
         };
 
-        tasks.push(newTask);
-        localStorage.setItem('project_tasks', JSON.stringify(tasks));
-        
-        currentSelectedFilter = newTask.clientName;
-        
-        document.getElementById('clientName').value = '';
-        document.getElementById('locationName').value = '';
-        document.getElementById('projectName').value = '';
-        document.getElementById('notes').value = '';
-        
-        updateClientFilters();
-        clientFilter.value = currentSelectedFilter;
-        updateUI();
-    });
-
-    clientFilter.addEventListener('change', (e) => {
-        currentSelectedFilter = e.target.value;
-        updateUI();
-    });
-
-    window.deleteTask = function(index) {
-        if(confirm('Ali ste prepričani, da želite izbrisati ta vnos?')) {
-            tasks.splice(index, 1);
-            localStorage.setItem('project_tasks', JSON.stringify(tasks));
-            updateClientFilters();
-            updateUI();
-        }
-    }
-
-    updateClientFilters();
-    updateUI();
-</script>
+        updateFilters();
+        render();
+    </script>
 </body>
 </html>
