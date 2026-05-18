@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Sledilnik Časa</title>
 
-<link class="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -157,6 +157,33 @@ flex: 1;
 min-width: 0;
 }
 
+/* POPRAVLJENO: Vnos za čas 24h */
+.time-picker-wrapper {
+display: flex;
+align-items: center;
+gap: 4px;
+background: var(--input-bg);
+border-radius: 12px;
+padding: 0 8px;
+height: 50px;
+flex: 1;
+}
+
+.time-picker-wrapper input {
+background: transparent;
+text-align: center;
+padding: 0;
+height: 100%;
+font-size: 16px;
+border: none;
+}
+
+.time-separator {
+font-weight: bold;
+color: var(--text-main);
+user-select: none;
+}
+
 .time-input-container {
 display: flex;
 gap: 6px;
@@ -182,8 +209,7 @@ height: auto;
 padding: 14px;
 }
 
-input[type="date"],
-input[type="time"] {
+input[type="date"] {
 display: flex;
 align-items: center;
 line-height: 50px; 
@@ -356,32 +382,40 @@ text-transform: uppercase;
 margin-bottom: 2px;
 }
 
-        /* POPRAVLJENO: Več odmika na desni strani, da se tekst nikoli ne zaleti v gumbe */
+/* POPRAVLJENO: Spremenjena struktura flexboxa, ki zanesljivo preprečuje vsakršno prekrivanje besedila z gumbi */
 .task-main-info {
 display: flex;
 justify-content: space-between;
 align-items: flex-start;
-            padding-right: 80px; /* Povečano za dva gumba */
-            padding-right: 85px; 
+gap: 12px;
 }
 
 .task-project {
 font-size: 17px;
 font-weight: 600;
-            margin-bottom: 4px;
-            margin-bottom: 6px;
+margin-bottom: 6px;
 word-break: break-word;
+flex: 1;
 }
 
-        /* POPRAVLJENO: Trajanje znotraj vrstice z meta podatki */
+/* POPRAVLJENO: Desna stran s trajanjem in kontrolami dela sinhrono brez prekrivanja */
+.task-right-side {
+display: flex;
+flex-direction: column;
+align-items: flex-end;
+gap: 8px;
+flex-shrink: 0;
+}
+
 .task-duration {
 font-weight: 700;
 color: var(--success);
-            white-space: nowrap;
-            background-color: rgba(52, 199, 89, 0.12);
-            padding: 2px 6px;
-            border-radius: 6px;
-            display: inline-block;
+white-space: nowrap;
+background-color: rgba(52, 199, 89, 0.12);
+padding: 4px 8px;
+border-radius: 6px;
+display: inline-block;
+font-size: 14px;
 }
 
 .task-location {
@@ -397,11 +431,11 @@ margin-bottom: 8px;
 .task-meta {
 font-size: 13px;
 color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin-top: 2px;
+display: flex;
+align-items: center;
+gap: 6px;
+flex-wrap: wrap;
+margin-top: 2px;
 }
 
 .task-notes {
@@ -415,27 +449,23 @@ opacity: 0.8;
 word-break: break-word;
 }
 
-        /* STRANSKI UKREPI ZA KARTICO (UREJANJE IN BRISANJE) */
+/* POPRAVLJENO: Gumbi niso več absolutno pozicionirani na kartici, ampak so del desnega stebra, s čimer se ne morejo prekrivati */
 .task-actions {
-position: absolute;
-top: 14px;
-right: 14px;
 display: flex;
 gap: 6px;
-            z-index: 5;
+z-index: 5;
 }
 
 .action-btn {
 border: none;
-padding: 6px 10px;
+padding: 4px 10px;
 border-radius: 8px;
-font-size: 13px;
+font-size: 12px;
 font-weight: 600;
 display: inline-flex;
 align-items: center;
 justify-content: center;
-            height: 30px;
-            height: 32px;
+height: 28px;
 }
 
 .action-btn.edit-btn {
@@ -630,18 +660,37 @@ font-size: 15px;
 <div class="form-group">
 <label>Začetek</label>
 <div class="time-input-container">
-<input type="time" id="startTime" required>
-<button type="button" class="btn-now" onclick="setCurrentTime('startTime')">Zdaj</button>
+<div class="time-picker-wrapper">
+<input type="text" id="startHour" list="hours24" placeholder="00" required maxlength="2" inputmode="numeric">
+<span class="time-separator">:</span>
+<input type="text" id="startMin" list="minutes15" placeholder="00" required maxlength="2" inputmode="numeric">
+</div>
+<button type="button" class="btn-now" onclick="setCurrentTimeCustom('startHour', 'startMin')">Zdaj</button>
 </div>
 </div>
 <div class="form-group">
 <label>Konec</label>
 <div class="time-input-container">
-<input type="time" id="endTime" required>
-<button type="button" class="btn-now" onclick="setCurrentTime('endTime')">Zdaj</button>
+<div class="time-picker-wrapper">
+<input type="text" id="endHour" list="hours24" placeholder="00" required maxlength="2" inputmode="numeric">
+<span class="time-separator">:</span>
+<input type="text" id="endMin" list="minutes15" placeholder="00" required maxlength="2" inputmode="numeric">
+</div>
+<button type="button" class="btn-now" onclick="setCurrentTimeCustom('endHour', 'endMin')">Zdaj</button>
 </div>
 </div>
 </div>
+
+<datalist id="hours24">
+<option value="00"><option value="01"><option value="02"><option value="03"><option value="04">
+<option value="05"><option value="06"><option value="07"><option value="08"><option value="09">
+<option value="10"><option value="11"><option value="12"><option value="13"><option value="14">
+<option value="15"><option value="16"><option value="17"><option value="18"><option value="19">
+<option value="20"><option value="21"><option value="22"><option value="23">
+</datalist>
+<datalist id="minutes15">
+<option value="00"><option value="15"><option value="30"><option value="45">
+</datalist>
 
 <div class="form-group">
 <label>Opombe</label>
@@ -726,7 +775,7 @@ let clientDatabase = JSON.parse(localStorage.getItem('client_database')) || [];
 let currentClientFilter = 'ALL';
 let currentMonthFilter = 'ALL';
 
-        // Spremenljivka, ki hrani indeks vnosa, ki ga urejamo (-1 pomeni nov vnos)
+// Indeks vnosa, ki ga urejamo
 let editTargetIndex = -1;
 
 const monthNamesSlo = [
@@ -734,12 +783,53 @@ const monthNamesSlo = [
 "Julij", "Avgust", "September", "Oktober", "November", "December"
 ];
 
-function setCurrentTime(inputId) {
+// POPRAVLJENO: Nastavljanje trenutnega časa v čistem 24h zapisu
+function setCurrentTimeCustom(hId, mId) {
 const now = new Date();
 const hours = String(now.getHours()).padStart(2, '0');
 const minutes = String(now.getMinutes()).padStart(2, '0');
-document.getElementById(inputId).value = `${hours}:${minutes}`;
+document.getElementById(hId).value = hours;
+document.getElementById(mId).value = minutes;
 }
+
+// POPRAVLJENO: Pametni preverjevalniki, ki samodejno popravljajo vnose v 24h format
+function setupSmartPickers(hId, mId) {
+const hInput = document.getElementById(hId);
+const mInput = document.getElementById(mId);
+
+hInput.addEventListener('blur', () => { if(hInput.value) hInput.value = String(Math.min(23, Math.max(0, parseInt(hInput.value, 10)))).padStart(2, '0'); });
+mInput.addEventListener('blur', () => { if(mInput.value) mInput.value = String(Math.min(59, Math.max(0, parseInt(mInput.value, 10)))).padStart(2, '0'); });
+
+hInput.addEventListener('keydown', (e) => {
+if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+e.preventDefault();
+let current = parseInt(hInput.value, 10) || 0;
+current = (e.key === 'ArrowUp') ? current + 1 : current - 1;
+if (current > 23) current = 0;
+if (current < 0) current = 23;
+hInput.value = String(current).padStart(2, '0');
+}
+});
+
+mInput.addEventListener('keydown', (e) => {
+if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+e.preventDefault();
+let current = parseInt(mInput.value, 10) || 0;
+let remainder = current % 15;
+if (e.key === 'ArrowUp') {
+current = current + (15 - remainder);
+} else {
+current = remainder === 0 ? current - 15 : current - remainder;
+}
+if (current >= 60) current = 0;
+if (current < 0) current = 45;
+mInput.value = String(current).padStart(2, '0');
+}
+});
+}
+
+setupSmartPickers('startHour', 'startMin');
+setupSmartPickers('endHour', 'endMin');
 
 function toggleAccordion() {
 accordionContainer.classList.toggle('active');
@@ -908,11 +998,23 @@ const isEditingThis = (originalIndex === editTargetIndex);
 
 const item = document.createElement('div');
 item.className = `task-item ${isEditingThis ? 'editing-now' : ''}`;
+
+// Varno preverjanje, če so polja prazna
+let displayClient = t.clientName || 'Neznana stranka';
+let displayProject = t.projectName || 'Splošno delo';
+
+/* POPRAVLJENO: Nova flex postavitev, kjer so gumbi (task-actions) zapakirani skupaj s trajanjem v 'task-right-side' */
 item.innerHTML = `
-                   <div class="task-client">${escape(t.clientName)}</div>
+                   <div class="task-client">${escape(displayClient)}</div>
                    <div class="task-main-info">
-                       <div class="task-project">${escape(t.projectName)}</div>
-                       <div class="task-duration">${dur.toFixed(2)} ur</div>
+                       <div class="task-project">${escape(displayProject)}</div>
+                       <div class="task-right-side">
+                           <div class="task-duration">${dur.toFixed(2)} ur</div>
+                           <div class="task-actions">
+                               <button class="action-btn edit-btn" onclick="startEditing(${originalIndex})">✏️ Uredi</button>
+                               <button class="action-btn delete-btn" onclick="deleteTask(${originalIndex})">Briši</button>
+                           </div>
+                       </div>
                    </div>
                    ${t.locationName ? `<div class="task-location">📍 ${escape(t.locationName)}</div>` : ''}
                    
@@ -923,11 +1025,6 @@ item.innerHTML = `
                    </div>
                    
                    ${t.notes ? `<div class="task-notes">${escape(t.notes)}</div>` : ''}
-                   
-                   <div class="task-actions">
-                       <button class="action-btn edit-btn" onclick="startEditing(${originalIndex})">✏️</button>
-                       <button class="action-btn delete-btn" onclick="deleteTask(${originalIndex})">Briši</button>
-                   </div>
                `;
 taskListElement.appendChild(item);
 });
@@ -941,34 +1038,43 @@ d.innerText = s;
 return d.innerHTML;
 }
 
-        // FUNKCIJA ZA PRIČETEK UREJANJA VNOSA
+// FUNKCIJA ZA PRIČETEK UREJANJA VNOSA
 window.startEditing = function(index) {
 editTargetIndex = index;
 const targetTask = tasks[index];
 
-            // Prenos podatkov v obrazec
+// Prenos podatkov v obrazec
 clientNameInput.value = targetTask.clientName;
 document.getElementById('locationName').value = targetTask.locationName || '';
 document.getElementById('projectName').value = targetTask.projectName;
 document.getElementById('taskDate').value = targetTask.taskDate;
-document.getElementById('startTime').value = targetTask.startTime;
-document.getElementById('endTime').value = targetTask.endTime;
+
+// Razcep ure za 24h pickerje
+if(targetTask.startTime && targetTask.startTime.includes(':')) {
+const [sh, sm] = targetTask.startTime.split(':');
+document.getElementById('startHour').value = sh;
+document.getElementById('startMin').value = sm;
+}
+if(targetTask.endTime && targetTask.endTime.includes(':')) {
+const [eh, em] = targetTask.endTime.split(':');
+document.getElementById('endHour').value = eh;
+document.getElementById('endMin').value = em;
+}
+
 document.getElementById('notes').value = targetTask.notes || '';
 
-            // Sprememba gumbov v obrazcu
+// Sprememba gumbov v obrazcu
 submitBtn.innerText = "Posodobi Delovni Čas";
 submitBtn.classList.add('mode-edit');
 cancelEditBtn.style.display = "block";
 
-            // Osvežitev seznama (da se označi trenutno urejana kartica)
 render();
 
-            // Nežen skok na vrh do obrazca, da uporabnik vidi kaj ureja
 document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
 clientNameInput.focus();
 };
 
-        // FUNKCIJA ZA PREKLIC UREJANJA
+// FUNKCIJA ZA PREKLIC UREJANJA
 window.cancelEditing = function() {
 editTargetIndex = -1;
 timeForm.reset();
@@ -1043,26 +1149,32 @@ clientDatabase.sort();
 localStorage.setItem('client_database', JSON.stringify(clientDatabase));
 }
 
+// Sestavljanje časa iz 24h vnosov
+const sH = document.getElementById('startHour').value.padStart(2, '0');
+const sM = document.getElementById('startMin').value.padStart(2, '0');
+const eH = document.getElementById('endHour').value.padStart(2, '0');
+const eM = document.getElementById('endMin').value.padStart(2, '0');
+
+const startTime = `${sH}:${sM}`;
+const endTime = `${eH}:${eM}`;
+
 const taskData = {
 clientName: inputClientRaw,
 locationName: document.getElementById('locationName').value.trim(),
 projectName: document.getElementById('projectName').value.trim(),
 taskDate: document.getElementById('taskDate').value,
-startTime: document.getElementById('startTime').value,
-endTime: document.getElementById('endTime').value,
+startTime: startTime,
+endTime: endTime,
 notes: document.getElementById('notes').value.trim()
 };
 
 if (editTargetIndex > -1) {
-                // Če urejamo obstoječi vnos, ga posodobimo na njegovem starem mestu
 tasks[editTargetIndex] = taskData;
-                editTargetIndex = -1; // Ponastavimo nazaj na dodajanje
-                editTargetIndex = -1;
+editTargetIndex = -1;
 submitBtn.innerText = "Zapiši Delovni Čas";
 submitBtn.classList.remove('mode-edit');
 cancelEditBtn.style.display = "none";
 } else {
-                // Sicer gre za popolnoma nov vnos
 tasks.push(taskData);
 }
 
@@ -1089,7 +1201,6 @@ render();
 });
 
 window.deleteTask = function(i) {
-            // Če brišemo ravno tisto kartico, ki jo trenutno urejamo, prekličemo urejanje
 if (i === editTargetIndex) {
 cancelEditing();
 }
