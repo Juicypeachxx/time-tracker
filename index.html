@@ -99,18 +99,28 @@
             letter-spacing: 0.5px;
         }
 
-        input, textarea {
+        input, textarea, select {
             width: 100%;
             padding: 12px;
             background: rgba(120, 120, 128, 0.08);
             border: 1px solid transparent;
             border-radius: 10px;
-            font-size: 16px; /* Prevents auto-zoom on iOS */
+            font-size: 16px;
             color: var(--text-main);
             transition: all 0.2s ease;
+            appearance: none;
+            -webkit-appearance: none;
         }
 
-        input:focus, textarea:focus {
+        select {
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%2386868b' d='M0,0 L5,5 L10,0 Z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 10px 6px;
+            padding-right: 30px;
+        }
+
+        input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: var(--primary);
             background: rgba(120, 120, 128, 0.02);
@@ -139,6 +149,13 @@
             opacity: 0.9;
         }
 
+        .filter-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+
         .history-header {
             display: flex;
             justify-content: space-between;
@@ -159,215 +176,3 @@
             background: rgba(0, 113, 227, 0.1);
             padding: 6px 12px;
             border-radius: 20px;
-        }
-
-        .task-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .task-item {
-            background: rgba(120, 120, 128, 0.04);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px;
-            position: relative;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .task-title-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            padding-right: 60px;
-        }
-
-        .project-name {
-            font-weight: 600;
-            font-size: 16px;
-            word-break: break-word;
-        }
-
-        .duration {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--success);
-            white-space: nowrap;
-        }
-
-        .task-meta {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin: 4px 0 8px 0;
-        }
-
-        .task-notes {
-            font-size: 14px;
-            background: rgba(120, 120, 128, 0.06);
-            padding: 8px 12px;
-            border-radius: 8px;
-            color: var(--text-main);
-            word-break: break-word;
-        }
-
-        .delete-btn {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: rgba(255, 69, 58, 0.1);
-            color: var(--danger);
-            border: none;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .delete-btn:leading {
-            background: rgba(255, 69, 58, 0.2);
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h1>Sledilnik Časa</h1>
-
-    <div class="card">
-        <form id="timeForm">
-            <div class="form-group">
-                <label for="projectName">Ime Projekta</label>
-                <input type="text" id="projectName" required placeholder="npr. Spletna stran za stranko">
-            </div>
-            <div class="form-group">
-                <label for="taskDate">Datum</label>
-                <input type="date" id="taskDate" required>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="startTime">Začetek</label>
-                    <input type="time" id="startTime" required>
-                </div>
-                <div class="form-group">
-                    <label for="endTime">Konec</label>
-                    <input type="time" id="endTime" required>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="notes">Opombe</label>
-                <textarea id="notes" placeholder="Dodatne podrobnosti o delu..."></textarea>
-            </div>
-            <button type="submit" class="btn-submit">Zapiši Delovni Čas</button>
-        </form>
-    </div>
-
-    <div class="card">
-        <div class="history-header">
-            <h2>Zgodovina</h2>
-            <div id="totalHours" class="total-badge">Skupaj: 0.00 ur</div>
-        </div>
-        <div id="taskList" class="task-list"></div>
-    </div>
-</div>
-
-<script>
-    // Set current date manually inside client context
-    document.getElementById('taskDate').value = new Date().toISOString().split('T')[0];
-
-    const timeForm = document.getElementById('timeForm');
-    const taskListElement = document.getElementById('taskList');
-    const totalHoursElement = document.getElementById('totalHours');
-
-    let tasks = JSON.parse(localStorage.getItem('project_tasks')) || [];
-
-    function calculateDuration(start, end) {
-        const [startHours, startMins] = start.split(':').map(Number);
-        const [endHours, endMins] = end.split(':').map(Number);
-        
-        let startTotalMinutes = (startHours * 60) + startMins;
-        let endTotalMinutes = (endHours * 60) + endMins;
-
-        if (endTotalMinutes < startTotalMinutes) {
-            endTotalMinutes += 24 * 60; // Next-day rollover adjustment
-        }
-
-        return (endTotalMinutes - startTotalMinutes) / 60;
-    }
-
-    function formatDateSlovenian(dateStr) {
-        if(!dateStr) return '';
-        const parts = dateStr.split('-');
-        if(parts.length !== 3) return dateStr;
-        return `${parts[2]}. ${parts[1]}. ${parts[0]}`;
-    }
-
-    function updateUI() {
-        taskListElement.innerHTML = '';
-        let globalTotalHours = 0;
-
-        if (tasks.length === 0) {
-            taskListElement.innerHTML = '<p style="text-align:center; color: var(--text-muted); font-size: 14px; margin: 20px 0;">Ni zabeleženih projektov.</p>';
-            totalHoursElement.innerText = 'Skupaj: 0.00 ur';
-            return;
-        }
-
-        tasks.forEach((task, index) => {
-            const hours = calculateDuration(task.startTime, task.endTime);
-            globalTotalHours += hours;
-
-            const item = document.createElement('div');
-            item.className = 'task-item';
-            item.innerHTML = `
-                <div class="task-title-row">
-                    <span class="project-name">${escapeHtml(task.projectName)}</span>
-                    <span class="duration">${hours.toFixed(2)} ur</span>
-                </div>
-                <div class="task-meta">
-                    ${formatDateSlovenian(task.taskDate)} • ${task.startTime} do ${task.endTime}
-                </div>
-                ${task.notes ? `<div class="task-notes">${escapeHtml(task.notes)}</div>` : ''}
-                <button class="delete-btn" onclick="deleteTask(${index})">Briši</button>
-            `;
-            taskListElement.appendChild(item);
-        });
-
-        totalHoursElement.innerText = `Skupaj: ${globalTotalHours.toFixed(2)} ur`;
-    }
-
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.innerText = text;
-        return div.innerHTML;
-    }
-
-    timeForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const newTask = {
-            projectName: document.getElementById('projectName').value,
-            taskDate: document.getElementById('taskDate').value,
-            startTime: document.getElementById('startTime').value,
-            endTime: document.getElementById('endTime').value,
-            notes: document.getElementById('notes').value
-        };
-
-        tasks.push(newTask);
-        localStorage.setItem('project_tasks', JSON.stringify(tasks));
-        
-        document.getElementById('projectName').value = '';
-        document.getElementById('notes').value = '';
-        
-        updateUI();
-    });
-
-    window.deleteTask = function(index) {
-        if(confirm('Ali ste prepričani, da želite izbrisati ta vnos?')) {
-            tasks.splice(index, 1);
-            localStorage.setItem('project_tasks
