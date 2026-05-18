@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Time Tracker</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --border: #e5e7eb;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #111827;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            resize: vertical;
+            height: 80px;
+        }
+
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            position: relative;
+        }
+
+        .task-title-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        .duration-badge {
+            color: var(--success);
+            background: #ecfdf5;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .task-meta {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .task-notes {
+            font-size: 14px;
+            background: #f9fafb;
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 3px solid var(--border);
+            font-style: italic;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            color: #ef4444;
+            border: none;
+            padding: 0;
+            width: auto;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .delete-btn:hover {
+            background: none;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Project Time Tracker</h1>
+
+    <!-- Log Form Card -->
+    <div class="card">
+        <form id="timeForm">
+            <div class="form-group">
+                <label for="projectName">Project Name</label>
+                <input type="text" id="projectName" required placeholder="e.g., Client Server Migration">
+            </div>
+            <div class="form-group">
+                <label for="taskDate">Date</label>
+                <input type="date" id="taskDate" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="startTime">Start Time</label>
+                    <input type="time" id="startTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="endTime">End Time</label>
+                    <input type="time" id="endTime" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="notes">Additional Notes</label>
+                <textarea id="notes" placeholder="Describe the steps or components utilized..."></textarea>
+            </div>
+            <button type="submit">Log Project Session</button>
+        </form>
+    </div>
+
+    <!-- History Card -->
+    <div class="card">
+        <div class="history-header">
+            <h2>Logged History</h2>
+            <div id="totalHours" style="font-weight: bold; color: var(--primary);">Total: 0.00 hrs</div>
+        </div>
+        <div id="taskList" class="task-list">
+            <!-- Entries will append here dynamically -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // Set today's date default input value
+    document.getElementById('taskDate').value = new Date().toISOString().split('T')[0];
+
+    const timeForm = document.getElementById('timeForm');
+    const taskListElement = document.getElementById('taskList');
+    const totalHoursElement = document.getElementById('totalHours');
+
+    // Retrieve initial data array from storage or set blank
+    let tasks = JSON.parse(localStorage.getItem('project_tasks')) || [];
+
+    function calculateDuration(start, end) {
+        const [startHours, startMins] = start.split(':').map(Number);
+        const [endHours, endMins] = end.split(':').map(Number);
+        
+        let startTotalMinutes = (startHours * 60) + startMins;
+        let endTotalMinutes = (endHours * 60) + endMins;
+
+        // If end time is past midnight (next day cross-over)
+        if (endTotalMinutes < startTotalMinutes) {
+            endTotalMinutes += 24 * 60;
+        }
+
+        const diffMinutes = endTotalMinutes - startTotalMinutes;
+        return (diffMinutes / 60);
+    }
+
+    function updateUI() {
+        taskListElement.innerHTML = '';
+        let globalTotalHours = 0;
+
+        if (tasks.length === 0) {
+            taskListElement.innerHTML = '<p style="text-align:center; color:#9ca3af;">No project sessions logged yet.</p>';
+            totalHoursElement.innerText = 'Total: 0.00 hrs';
+            return;
+        }
+
+        tasks.forEach((task, index) => {
+            const hours = calculateDuration(task.startTime, task.endTime);
+            globalTotalHours += hours;
+
+            const item = document.createElement('div');
+            item.className = 'task-item';
+            item.innerHTML = `
+                <div class="task-title-row">
+                    <span>${escapeHtml(task.projectName)}</span>
+                    <span class="duration-badge">${hours.toFixed(2)} hrs</span>
+                </div>
+                <div class="task-meta">
+                    <strong>Date:</strong> ${task.taskDate} | <strong>Timeline:</strong> ${task.startTime} to ${task.endTime}
+                </div>
+                ${task.notes ? `<div class="task-notes">${escapeHtml(task.notes)}</div>` : ''}
+                <button class="delete-btn" onclick="deleteTask(${index})">Remove</button>
+            `;
+            taskListElement.appendChild(item);
+        });
+
+        totalHoursElement.innerText = `Total: ${globalTotalHours.toFixed(2)} hrs`;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.innerText = text;
+        return div.innerHTML;
+    }
+
+    timeForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const newTask = {
+            projectName: document.getElementById('projectName').value,
+            taskDate: document.getElementById('taskDate').value,
+            startTime: document.getElementById('startTime').value,
+            endTime: document.getElementById('endTime').value,
+            notes: document.getElementById('notes').value
+        };
+
+        tasks.push(newTask);
+        localStorage.setItem('project_tasks', JSON.stringify(tasks));
+        
+        // Reset specific UI fields
+        document.getElementById('projectName').value = '';
+        document.getElementById('notes').value = '';
+        
+        updateUI();
+    });
+
+    window.deleteTask = function(index) {
+        tasks.splice(index, 1);
+        localStorage.setItem('project_tasks', JSON.stringify(tasks));
+        updateUI();
+    }
+
+    // Run initial display rendering loop
+    updateUI();
+</script>
+</body>
+</html>
