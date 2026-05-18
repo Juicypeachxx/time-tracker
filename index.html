@@ -141,17 +141,47 @@
 
         .form-row .form-group {
             flex: 1;
+            min-width: 0; /* Prepreči proženje flex-shrink hroščev */
         }
 
+        /* POPRAVLJENO: Univerzalno oblikovanje vnosnih polj z eksplicitno višino za iOS */
         input, textarea, select {
             width: 100%;
+            height: 50px; /* Fiksna višina prepreči stiskanje in prekrivanje */
             background: var(--input-bg);
             border: none;
             color: var(--text-main);
-            padding: 14px;
+            padding: 0 14px; /* Odmik levo/desno, zgoraj/spodaj kontrolira višina */
             border-radius: 12px;
             font-size: 16px;
             outline: none;
+            appearance: none;
+            -webkit-appearance: none; /* Odstrani iOS sistemske sence in popačenja */
+        }
+
+        /* Poseben popravek za tekstovno področje, ki potrebuje poljubno višino */
+        textarea {
+            height: auto;
+            padding: 14px;
+        }
+
+        /* POPRAVLJENO: Specifični popravki za iOS datum in čas, da se besedilo lepo centrira */
+        input[type="date"],
+        input[type="time"] {
+            display: flex;
+            align-items: center;
+            line-height: 50px; 
+            padding-top: 0;
+            padding-bottom: 0;
+            min-height: 50px;
+        }
+
+        select {
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%238E8E93' d='M0 0l5 5 5-5z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 12px;
+            padding-right: 36px;
         }
 
         input::placeholder {
@@ -180,6 +210,7 @@
             border-radius: 14px;
             margin-top: 10px;
             box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+            height: auto;
         }
 
         button.btn-secondary {
@@ -190,6 +221,7 @@
             font-size: 15px;
             font-weight: 600;
             border-radius: 10px;
+            height: 50px;
         }
 
         .total-display {
@@ -306,7 +338,14 @@
             box-shadow: var(--shadow);
         }
 
-        /* --- ZLOŽLJIV ACCORDION DIZAJN --- */
+        .filter-container select {
+            height: 50px;
+        }
+
+        .accordion-container {
+            width: 100%;
+        }
+
         .accordion-header {
             display: flex;
             justify-content: space-between;
@@ -341,7 +380,7 @@
         }
 
         .accordion-container.active .accordion-content {
-            max-height: 400px; /* Dovolj prostora za odprto kartico */
+            max-height: 400px;
             margin-top: 12px;
             opacity: 1;
         }
@@ -370,6 +409,7 @@
             font-weight: 600;
             font-size: 13px;
             padding: 4px 8px;
+            height: auto;
         }
     </style>
 </head>
@@ -386,8 +426,8 @@
             <form id="timeForm">
                 <div class="form-group">
                     <label>Stranka</label>
-                    <input type="text" id="clientName" list="existingClients" required placeholder="Izberi ali vpiši stranko">
-                    <datalist id="existingClients"></datalist>
+                    <select id="clientNameSelect" required>
+                        </select>
                 </div>
                 
                 <div class="form-row">
@@ -479,7 +519,7 @@
         const totalHoursElement = document.getElementById('totalHours');
         const clientFilter = document.getElementById('clientFilter');
         const monthFilter = document.getElementById('monthFilter');
-        const existingClientsDatalist = document.getElementById('existingClients');
+        const clientNameSelect = document.getElementById('clientNameSelect');
         const managedClientList = document.getElementById('managedClientList');
         const newClientInput = document.getElementById('newClientInput');
         const accordionContainer = document.getElementById('settingsAccordion');
@@ -494,12 +534,10 @@
             "Julij", "Avgust", "September", "Oktober", "November", "December"
         ];
 
-        // --- ACCORDION LOGIC ---
         function toggleAccordion() {
             accordionContainer.classList.toggle('active');
         }
 
-        // --- THEME LOGIC ---
         function toggleTheme() {
             const body = document.body;
             const currentTheme = body.getAttribute('data-theme');
@@ -510,7 +548,6 @@
         const savedTheme = localStorage.getItem('theme_pref') || 'light';
         document.body.setAttribute('data-theme', savedTheme);
 
-        // --- BAZA STRANK ---
         function addNewClient() {
             const clientName = newClientInput.value.trim();
             if (!clientName) return;
@@ -535,7 +572,6 @@
             }
         }
 
-        // --- POMOŽNE FUNKCIJE ---
         function calculateDuration(start, end) {
             const [sH, sM] = start.split(':').map(Number);
             const [eH, eM] = end.split(':').map(Number);
@@ -546,15 +582,18 @@
         }
 
         function formatDateSlo(dateStr) {
-            const [y, m, d] = dateStr.split('-');
-            return `${d}. ${m}. ${y}`;
+            if(!dateStr) return '';
+            const parts = dateStr.split('-');
+            if(parts.length !== 3) return dateStr;
+            const [y, m, d] = parts;
+            return `${parseInt(d, 10)}. ${parseInt(m, 10)}. ${y}`;
         }
 
         function getAvailableMonths(filteredTasks) {
             const months = filteredTasks.map(t => {
                 if(!t.taskDate) return null;
-                const [y, m] = t.taskDate.split('-');
-                return `${y}-${m}`;
+                const parts = t.taskDate.split('-');
+                return parts.length >= 2 ? `${parts[0]}-${parts[1]}` : null;
             }).filter(Boolean);
             return [...new Set(months)].sort().reverse();
         }
@@ -563,25 +602,41 @@
             const activeTaskClients = tasks.map(t => t.clientName);
             const allUniqueClients = [...new Set([...clientDatabase, ...activeTaskClients])].filter(Boolean).sort();
             
-            const prevSelectedClient = clientFilter.value;
+            const prevSelectedInputClient = clientNameSelect.value;
+            clientNameSelect.innerHTML = '';
             
+            if (clientDatabase.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = "";
+                opt.innerText = "⚠️ Najprej dodaj stranko spodaj";
+                opt.disabled = true;
+                opt.selected = true;
+                clientNameSelect.appendChild(opt);
+            } else {
+                clientDatabase.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.innerText = c;
+                    clientNameSelect.appendChild(opt);
+                });
+                if (clientDatabase.includes(prevSelectedInputClient)) {
+                    clientNameSelect.value = prevSelectedInputClient;
+                }
+            }
+            
+            const prevSelectedFilterClient = clientFilter.value;
             clientFilter.innerHTML = '<option value="ALL">-- Vse stranke skupaj --</option>';
-            existingClientsDatalist.innerHTML = '';
             
             allUniqueClients.forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c;
                 opt.innerText = c;
                 clientFilter.appendChild(opt);
-                
-                const dListOpt = document.createElement('option');
-                dListOpt.value = c;
-                existingClientsDatalist.appendChild(dListOpt);
             });
             
-            if (allUniqueClients.includes(prevSelectedClient)) {
-                clientFilter.value = prevSelectedClient;
-                currentClientFilter = prevSelectedClient;
+            if (allUniqueClients.includes(prevSelectedFilterClient)) {
+                clientFilter.value = prevSelectedFilterClient;
+                currentClientFilter = prevSelectedFilterClient;
             } else {
                 clientFilter.value = 'ALL';
                 currentClientFilter = 'ALL';
@@ -594,13 +649,15 @@
             monthFilter.innerHTML = '<option value="ALL">-- Vsi meseci --</option>';
             
             availableMonths.forEach(mKey => {
-                const [year, monthNum] = mKey.split('-');
-                const monthName = monthNamesSlo[parseInt(monthNum, 10) - 1];
-                
-                const opt = document.createElement('option');
-                opt.value = mKey;
-                opt.innerText = `${monthName} ${year}`;
-                monthFilter.appendChild(opt);
+                const parts = mKey.split('-');
+                if(parts.length === 2) {
+                    const [year, monthNum] = parts;
+                    const monthName = monthNamesSlo[parseInt(monthNum, 10) - 1];
+                    const opt = document.createElement('option');
+                    opt.value = mKey;
+                    opt.innerText = `${monthName} ${year}`;
+                    monthFilter.appendChild(opt);
+                }
             });
 
             if (availableMonths.includes(prevSelectedMonth)) {
@@ -624,7 +681,6 @@
             }
         }
 
-        // --- IZRIS ZGODOVINE ---
         function render() {
             taskListElement.innerHTML = '';
             let total = 0;
@@ -633,8 +689,10 @@
                 const matchClient = (currentClientFilter === 'ALL' || t.clientName === currentClientFilter);
                 let matchMonth = true;
                 if (currentMonthFilter !== 'ALL' && t.taskDate) {
-                    const [y, m] = t.taskDate.split('-');
-                    matchMonth = (`${y}-${m}` === currentMonthFilter);
+                    const parts = t.taskDate.split('-');
+                    if(parts.length >= 2) {
+                        matchMonth = (`${parts[0]}-${parts[1]}` === currentMonthFilter);
+                    }
                 }
                 return matchClient && matchMonth;
             });
@@ -675,13 +733,17 @@
             return d.innerHTML;
         }
 
-        // --- DOGODKI ---
         timeForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const clientNameInput = document.getElementById('clientName').value.trim();
+            const selectedClient = clientNameSelect.value;
+            
+            if (!selectedClient) {
+                alert('Prosimo, izberite stranko. Če je seznam prazen, jo dodajte v nastavitvah spodaj.');
+                return;
+            }
             
             const newTask = {
-                clientName: clientNameInput,
+                clientName: selectedClient,
                 locationName: document.getElementById('locationName').value.trim(),
                 projectName: document.getElementById('projectName').value.trim(),
                 taskDate: document.getElementById('taskDate').value,
@@ -689,12 +751,6 @@
                 endTime: document.getElementById('endTime').value,
                 notes: document.getElementById('notes').value.trim()
             };
-
-            if (clientNameInput && !clientDatabase.includes(clientNameInput)) {
-                clientDatabase.push(clientNameInput);
-                clientDatabase.sort();
-                localStorage.setItem('client_database', JSON.stringify(clientDatabase));
-            }
 
             tasks.push(newTask);
             localStorage.setItem('project_tasks', JSON.stringify(tasks));
