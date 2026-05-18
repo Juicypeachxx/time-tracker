@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sledilnik Časa</title>
 
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link class="apple-touch-icon" href="apple-touch-icon.png">
 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -251,12 +251,30 @@
             height: 50px;
         }
 
+        button.btn-export {
+            background-color: var(--success);
+            color: #FFFFFF;
+            border: none;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 10px;
+            height: 34px;
+            box-shadow: 0 2px 8px rgba(52, 199, 89, 0.2);
+        }
+
         .total-display {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
             padding: 0 4px;
+        }
+
+        .total-display-title-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .total-display h2 {
@@ -584,7 +602,10 @@
             </div>
 
             <div class="total-display">
-                <h2>Zgodovina vnosov</h2>
+                <div class="total-display-title-row">
+                    <h2>Zgodovina vnosov</h2>
+                    <button type="button" class="btn-export" onclick="exportToExcel()">Izvozi v Excel (CSV)</button>
+                </div>
                 <div id="totalHours" class="total-badge">0.00 ur</div>
             </div>
 
@@ -756,12 +777,10 @@
             }
         }
 
-        function render() {
-            taskListElement.innerHTML = '';
-            let total = 0;
-
-            const filtered = tasks.filter(t => {
-                const matchClient = (currentClientFilter === 'ALL' || t.clientName === currentFilterClient || t.clientName === currentClientFilter);
+        // Pridobivanje filtriranih vnosov, ki so trenutno prikazani
+        function getFilteredTasks() {
+            return tasks.filter(t => {
+                const matchClient = (currentClientFilter === 'ALL' || t.clientName === currentClientFilter);
                 let matchMonth = true;
                 if (currentMonthFilter !== 'ALL' && t.taskDate) {
                     const parts = t.taskDate.split('-');
@@ -770,7 +789,14 @@
                     }
                 }
                 return matchClient && matchMonth;
-            });
+            }).sort((a, b) => new Date(b.taskDate) - new Date(a.taskDate));
+        }
+
+        function render() {
+            taskListElement.innerHTML = '';
+            let total = 0;
+
+            const filtered = getFilteredTasks();
 
             if (filtered.length === 0) {
                 taskListElement.innerHTML = '<p style="text-align:center; opacity:0.5; margin: 20px 0;">Ni vnosov za izbrane filtre.</p>';
@@ -778,7 +804,7 @@
                 return;
             }
 
-            filtered.sort((a, b) => new Date(b.taskDate) - new Date(a.taskDate)).forEach(t => {
+            filtered.forEach(t => {
                 const dur = calculateDuration(t.startTime, t.endTime);
                 total += dur;
 
@@ -806,6 +832,59 @@
             let d = document.createElement('div');
             d.innerText = s;
             return d.innerHTML;
+        }
+
+        // Funkcija za izvoz trenutno filtriranih vnosov v Excel (preko CSV UTF-8 z BOM)
+        function exportToExcel() {
+            const filteredTasks = getFilteredTasks();
+            if (filteredTasks.length === 0) {
+                alert('Ni podatkov za izvoz.');
+                return;
+            }
+
+            // Glava tabele - uporabimo podpičje (;), ki ga evropske nastavitve Excela privzeto razumejo kot ločilo stolpcev
+            const headers = ['Stranka', 'Lokacija', 'Projekt', 'Datum', 'Zacetek', 'Konec', 'Trajanje (ure)', 'Opombe'];
+            
+            const rows = filteredTasks.map(t => {
+                const duration = calculateDuration(t.startTime, t.endTime).toFixed(2);
+                
+                // Da se izognemo sesutju tabele zaradi vejic/podpičij v opombah ali imenih, vrednosti ovijemo v narekovaje
+                // Prav tako podvojimo obstoječe narekovaje znotraj besedila po CSV standardu
+                return [
+                    `"${(t.clientName || '').replace(/"/g, '""')}"`,
+                    `"${(t.locationName || '').replace(/"/g, '""')}"`,
+                    `"${(t.projectName || '').replace(/"/g, '""')}"`,
+                    `"${formatDateSlo(t.taskDate)}"`,
+                    `"${t.startTime || ''}"`,
+                    `"${t.endTime || ''}"`,
+                    `"${duration.replace('.', ',')}"`, // Pretvorba pike v vejico za lažje računanje v slovenskem Excelu
+                    `"${(t.notes || '').replace(/"/g, '""').replace(/\n/g, ' ')}"` // Odstranimo nove vrstice v opombah, da ne lomijo CSV strukture
+                ].join(';');
+            });
+
+            // Združimo glavo in vrstice ter dodamo oznako za prehod v novo vrstico
+            const csvContent = headers.join(';') + '\r\n' + rows.join('\r\n');
+
+            // Dodamo UTF-8 BOM (\uFEFF), da Excel takoj prepozna slovenske šumnike (ČŠŽ)
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            
+            // Ustvarimo začasno povezavo za prenos datoteke
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            // Dinamično ime datoteke glede na filtre
+            let filename = 'Sledilnik_Casa_izvoz';
+            if (currentClientFilter !== 'ALL') filename += `_${currentClientFilter.replace(/[^a-z0-9]/gi, '_')}`;
+            if (currentMonthFilter !== 'ALL') filename += `_${currentMonthFilter}`;
+            filename += '.csv';
+
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         timeForm.addEventListener('submit', (e) => {
