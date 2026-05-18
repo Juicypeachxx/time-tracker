@@ -25,6 +25,7 @@
             --shadow: 0 4px 24px rgba(0,0,0,0.06);
             --success: #34C759;
             --danger: #FF3B30;
+            --warning: #FF9500;
         }
 
         [data-theme="dark"] {
@@ -240,6 +241,11 @@
             height: auto;
         }
 
+        button.btn-submit.mode-edit {
+            background-color: var(--warning);
+            box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
+        }
+
         button.btn-secondary {
             background-color: var(--input-bg);
             color: var(--text-main);
@@ -251,7 +257,18 @@
             height: 50px;
         }
 
-        /* POPRAVLJEN GUMB ZA MOBILNE NAPRAVE */
+        button.btn-cancel-edit {
+            width: 100%;
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 14px;
+            margin-top: 8px;
+        }
+
         button.btn-export {
             background-color: var(--success);
             color: #FFFFFF;
@@ -271,7 +288,6 @@
             -webkit-appearance: none;
         }
 
-        /* POPRAVLJENA STRUKTURA GLAVE PODATKOV NA MOBITELU */
         .total-display {
             display: flex;
             flex-direction: column;
@@ -322,6 +338,11 @@
             animation: slideUp 0.4s ease-out;
         }
 
+        .task-item.editing-now {
+            border: 2px solid var(--warning);
+            box-shadow: 0 0 12px rgba(255, 149, 0, 0.2);
+        }
+
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -339,7 +360,7 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            padding-right: 50px;
+            padding-right: 80px; /* Povečano za dva gumba */
         }
 
         .task-project {
@@ -381,17 +402,36 @@
             word-break: break-word;
         }
 
-        .delete-btn {
+        /* STRANSKI UKREPI ZA KARTICO (UREJANJE IN BRISANJE) */
+        .task-actions {
             position: absolute;
-            top: 16px;
-            right: 16px;
-            background: var(--danger);
-            color: white;
+            top: 14px;
+            right: 14px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .action-btn {
             border: none;
             padding: 6px 10px;
             border-radius: 8px;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 30px;
+        }
+
+        .action-btn.edit-btn {
+            background: var(--input-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .action-btn.delete-btn {
+            background: var(--danger);
+            color: white;
         }
 
         .filter-container {
@@ -477,7 +517,6 @@
             height: auto;
         }
 
-        /* PRILAGODITEV ZA VEČJE PROSTORNE EKRANE (DESKTOP) */
         @media screen and (min-width: 768px) {
             .header {
                 max-width: 1024px;
@@ -513,7 +552,6 @@
                 margin-bottom: 0 !important;
             }
 
-            /* Na namizju gre lahko vse spet v eno lepo vrstico */
             .total-display {
                 flex-direction: row;
                 justify-content: space-between;
@@ -549,7 +587,7 @@
     <div class="container">
         
         <div class="left-column">
-            <div class="card">
+            <div class="card" id="formCard">
                 <form id="timeForm">
                     <div class="form-group">
                         <label>Stranka</label>
@@ -595,7 +633,8 @@
                         <textarea id="notes" placeholder="Podrobnosti dela..."></textarea>
                     </div>
 
-                    <button type="submit" class="btn-submit">Zapiši Delovni Čas</button>
+                    <button type="submit" id="submitBtn" class="btn-submit">Zapiši Delovni Čas</button>
+                    <button type="button" id="cancelEditBtn" class="btn-cancel-edit" style="display: none;" onclick="cancelEditing()">Prekliči urejanje</button>
                 </form>
             </div>
 
@@ -663,11 +702,17 @@
         const managedClientList = document.getElementById('managedClientList');
         const newClientInput = document.getElementById('newClientInput');
         const accordionContainer = document.getElementById('settingsAccordion');
+        
+        const submitBtn = document.getElementById('submitBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
 
         let tasks = JSON.parse(localStorage.getItem('project_tasks')) || [];
         let clientDatabase = JSON.parse(localStorage.getItem('client_database')) || [];
         let currentClientFilter = 'ALL';
         let currentMonthFilter = 'ALL';
+        
+        // Spremenljivka, ki hrani indeks vnosa, ki ga urejamo (-1 pomeni nov vnos)
+        let editTargetIndex = -1;
 
         const monthNamesSlo = [
             "Januar", "Februar", "Marec", "April", "Maj", "Junij",
@@ -844,8 +889,10 @@
                 total += dur;
 
                 const originalIndex = tasks.indexOf(t);
+                const isEditingThis = (originalIndex === editTargetIndex);
+                
                 const item = document.createElement('div');
-                item.className = 'task-item';
+                item.className = `task-item ${isEditingThis ? 'editing-now' : ''}`;
                 item.innerHTML = `
                     <div class="task-client">${escape(t.clientName)}</div>
                     <div class="task-main-info">
@@ -855,7 +902,11 @@
                     ${t.locationName ? `<div class="task-location">📍 ${escape(t.locationName)}</div>` : ''}
                     <div class="task-meta">${formatDateSlo(t.taskDate)} • ${t.startTime} - ${t.endTime}</div>
                     ${t.notes ? `<div class="task-notes">${escape(t.notes)}</div>` : ''}
-                    <button class="delete-btn" onclick="deleteTask(${originalIndex})">Briši</button>
+                    
+                    <div class="task-actions">
+                        <button class="action-btn edit-btn" onclick="startEditing(${originalIndex})">✏️</button>
+                        <button class="action-btn delete-btn" onclick="deleteTask(${originalIndex})">Briši</button>
+                    </div>
                 `;
                 taskListElement.appendChild(item);
             });
@@ -868,6 +919,46 @@
             d.innerText = s;
             return d.innerHTML;
         }
+
+        // FUNKCIJA ZA PRIČETEK UREJANJA VNOSA
+        window.startEditing = function(index) {
+            editTargetIndex = index;
+            const targetTask = tasks[index];
+
+            // Prenos podatkov v obrazec
+            clientNameInput.value = targetTask.clientName;
+            document.getElementById('locationName').value = targetTask.locationName || '';
+            document.getElementById('projectName').value = targetTask.projectName;
+            document.getElementById('taskDate').value = targetTask.taskDate;
+            document.getElementById('startTime').value = targetTask.startTime;
+            document.getElementById('endTime').value = targetTask.endTime;
+            document.getElementById('notes').value = targetTask.notes || '';
+
+            // Sprememba gumbov v obrazcu
+            submitBtn.innerText = "Posodobi Delovni Čas";
+            submitBtn.classList.add('mode-edit');
+            cancelEditBtn.style.display = "block";
+
+            // Osvežitev seznama (da se označi trenutno urejana kartica)
+            render();
+
+            // Nežen skok na vrh do obrazca, da uporabnik vidi kaj ureja
+            document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
+            clientNameInput.focus();
+        };
+
+        // FUNKCIJA ZA PREKLIC UREJANJA
+        window.cancelEditing = function() {
+            editTargetIndex = -1;
+            timeForm.reset();
+            document.getElementById('taskDate').value = new Date().toISOString().split('T')[0];
+            
+            submitBtn.innerText = "Zapiši Delovni Čas";
+            submitBtn.classList.remove('mode-edit');
+            cancelEditBtn.style.display = "none";
+            
+            render();
+        };
 
         function exportToExcel() {
             const filteredTasks = getFilteredTasks();
@@ -931,7 +1022,7 @@
                 localStorage.setItem('client_database', JSON.stringify(clientDatabase));
             }
             
-            const newTask = {
+            const taskData = {
                 clientName: inputClientRaw,
                 locationName: document.getElementById('locationName').value.trim(),
                 projectName: document.getElementById('projectName').value.trim(),
@@ -941,7 +1032,18 @@
                 notes: document.getElementById('notes').value.trim()
             };
 
-            tasks.push(newTask);
+            if (editTargetIndex > -1) {
+                // Če urejamo obstoječi vnos, ga posodobimo na njegovem starem mestu
+                tasks[editTargetIndex] = taskData;
+                editTargetIndex = -1; // Ponastavimo nazaj na dodajanje
+                submitBtn.innerText = "Zapiši Delovni Čas";
+                submitBtn.classList.remove('mode-edit');
+                cancelEditBtn.style.display = "none";
+            } else {
+                // Sicer gre za popolnoma nov vnos
+                tasks.push(taskData);
+            }
+
             localStorage.setItem('project_tasks', JSON.stringify(tasks));
             
             timeForm.reset();
@@ -965,6 +1067,10 @@
         });
 
         window.deleteTask = function(i) {
+            // Če brišemo ravno tisto kartico, ki jo trenutno urejamo, prekličemo urejanje
+            if (i === editTargetIndex) {
+                cancelEditing();
+            }
             if (confirm('Izbrišem ta vnos časa?')) {
                 tasks.splice(i, 1);
                 localStorage.setItem('project_tasks', JSON.stringify(tasks));
