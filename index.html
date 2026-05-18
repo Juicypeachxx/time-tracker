@@ -356,24 +356,29 @@
             margin-bottom: 2px;
         }
 
+        /* POPRAVLJENO: Več odmika na desni strani, da se tekst nikoli ne zaleti v gumbe */
         .task-main-info {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            padding-right: 80px; /* Povečano za dva gumba */
+            padding-right: 85px; 
         }
 
         .task-project {
             font-size: 17px;
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             word-break: break-word;
         }
 
+        /* POPRAVLJENO: Trajanje znotraj vrstice z meta podatki */
         .task-duration {
             font-weight: 700;
             color: var(--success);
-            white-space: nowrap;
+            background-color: rgba(52, 199, 89, 0.12);
+            padding: 2px 6px;
+            border-radius: 6px;
+            display: inline-block;
         }
 
         .task-location {
@@ -389,6 +394,11 @@
         .task-meta {
             font-size: 13px;
             color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 2px;
         }
 
         .task-notes {
@@ -402,13 +412,13 @@
             word-break: break-word;
         }
 
-        /* STRANSKI UKREPI ZA KARTICO (UREJANJE IN BRISANJE) */
         .task-actions {
             position: absolute;
             top: 14px;
             right: 14px;
             display: flex;
             gap: 6px;
+            z-index: 5;
         }
 
         .action-btn {
@@ -420,7 +430,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            height: 30px;
+            height: 32px;
         }
 
         .action-btn.edit-btn {
@@ -711,7 +721,6 @@
         let currentClientFilter = 'ALL';
         let currentMonthFilter = 'ALL';
         
-        // Spremenljivka, ki hrani indeks vnosa, ki ga urejamo (-1 pomeni nov vnos)
         let editTargetIndex = -1;
 
         const monthNamesSlo = [
@@ -897,10 +906,17 @@
                     <div class="task-client">${escape(t.clientName)}</div>
                     <div class="task-main-info">
                         <div class="task-project">${escape(t.projectName)}</div>
-                        <div class="task-duration">${dur.toFixed(2)} ur</div>
                     </div>
                     ${t.locationName ? `<div class="task-location">📍 ${escape(t.locationName)}</div>` : ''}
-                    <div class="task-meta">${formatDateSlo(t.taskDate)} • ${t.startTime} - ${t.endTime}</div>
+                    
+                    <div class="task-meta">
+                        <span>${formatDateSlo(t.taskDate)}</span>
+                        <span>•</span>
+                        <span>${t.startTime} - ${t.endTime}</span>
+                        <span>•</span>
+                        <span class="task-duration">${dur.toFixed(2)} ur</span>
+                    </div>
+                    
                     ${t.notes ? `<div class="task-notes">${escape(t.notes)}</div>` : ''}
                     
                     <div class="task-actions">
@@ -920,12 +936,10 @@
             return d.innerHTML;
         }
 
-        // FUNKCIJA ZA PRIČETEK UREJANJA VNOSA
         window.startEditing = function(index) {
             editTargetIndex = index;
             const targetTask = tasks[index];
 
-            // Prenos podatkov v obrazec
             clientNameInput.value = targetTask.clientName;
             document.getElementById('locationName').value = targetTask.locationName || '';
             document.getElementById('projectName').value = targetTask.projectName;
@@ -934,20 +948,16 @@
             document.getElementById('endTime').value = targetTask.endTime;
             document.getElementById('notes').value = targetTask.notes || '';
 
-            // Sprememba gumbov v obrazcu
             submitBtn.innerText = "Posodobi Delovni Čas";
             submitBtn.classList.add('mode-edit');
             cancelEditBtn.style.display = "block";
 
-            // Osvežitev seznama (da se označi trenutno urejana kartica)
             render();
 
-            // Nežen skok na vrh do obrazca, da uporabnik vidi kaj ureja
             document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
             clientNameInput.focus();
         };
 
-        // FUNKCIJA ZA PREKLIC UREJANJA
         window.cancelEditing = function() {
             editTargetIndex = -1;
             timeForm.reset();
@@ -1033,14 +1043,12 @@
             };
 
             if (editTargetIndex > -1) {
-                // Če urejamo obstoječi vnos, ga posodobimo na njegovem starem mestu
                 tasks[editTargetIndex] = taskData;
-                editTargetIndex = -1; // Ponastavimo nazaj na dodajanje
+                editTargetIndex = -1;
                 submitBtn.innerText = "Zapiši Delovni Čas";
                 submitBtn.classList.remove('mode-edit');
                 cancelEditBtn.style.display = "none";
             } else {
-                // Sicer gre za popolnoma nov vnos
                 tasks.push(taskData);
             }
 
@@ -1067,7 +1075,6 @@
         });
 
         window.deleteTask = function(i) {
-            // Če brišemo ravno tisto kartico, ki jo trenutno urejamo, prekličemo urejanje
             if (i === editTargetIndex) {
                 cancelEditing();
             }
