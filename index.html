@@ -780,7 +780,15 @@
                 return;
             }
 
-            filtered.sort((a, b) => new Date(b.taskDate) - new Date(a.taskDate)).forEach(t => {
+            // POPRAVEK: Kronološko urejanje (Najnovejši datum zgoraj, če je datum isti, pa najnovejša ura začetka zgoraj)
+            filtered.sort((a, b) => {
+                const dateA = new Date(a.taskDate);
+                const dateB = new Date(b.taskDate);
+                if (dateB - dateA !== 0) {
+                    return dateB - dateA;
+                }
+                return b.startTime.localeCompare(a.startTime);
+            }).forEach(t => {
                 const dur = calculateDuration(t.startTime, t.endTime);
                 total += dur;
 
