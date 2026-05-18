@@ -1,48 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Time Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Sledilnik Projektnega Časa</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
         :root {
-            --bg-color: #f4f6f9;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --border: #e5e7eb;
-            --success: #10b981;
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-blur: blur(12px);
+            --text-main: #1d1d1f;
+            --text-muted: #86868b;
+            --primary: #0071e3;
+            --primary-hover: #0077ed;
+            --danger: #ff453a;
+            --success: #34c759;
+            --border: rgba(0, 0, 0, 0.08);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-gradient: linear-gradient(135deg, #141416 0%, #28282b 100%);
+                --card-bg: rgba(28, 28, 30, 0.8);
+                --text-main: #f5f5f7;
+                --text-muted: #86868b;
+                --primary: #0a84ff;
+                --primary-hover: #2291ff;
+                --danger: #ff453a;
+                --success: #32d74b;
+                --border: rgba(255, 255, 255, 0.08);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background: var(--bg-gradient);
+            color: var(--text-main);
             margin: 0;
-            padding: 20px;
+            padding: 20px 16px env(safe-area-inset-bottom) 16px;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
         }
 
         .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 600px;
+            margin-top: env(safe-area-inset-top);
         }
 
         h1 {
+            font-size: 28px;
+            font-weight: 700;
             text-align: center;
-            color: #111827;
             margin-bottom: 24px;
+            letter-spacing: -0.5px;
         }
 
         .card {
             background: var(--card-bg);
+            backdrop-filter: var(--card-blur);
+            -webkit-backdrop-filter: var(--card-blur);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            margin-bottom: 24px;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
         }
 
         .form-group {
@@ -51,7 +82,7 @@
 
         .form-row {
             display: flex;
-            gap: 16px;
+            gap: 12px;
         }
 
         .form-row .form-group {
@@ -60,49 +91,74 @@
 
         label {
             display: block;
+            font-size: 13px;
             font-weight: 600;
+            color: var(--text-muted);
             margin-bottom: 6px;
-            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         input, textarea {
             width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 16px;
-            box-sizing: border-box;
+            padding: 12px;
+            background: rgba(120, 120, 128, 0.08);
+            border: 1px solid transparent;
+            border-radius: 10px;
+            font-size: 16px; /* Prevents auto-zoom on iOS */
+            color: var(--text-main);
+            transition: all 0.2s ease;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(120, 120, 128, 0.02);
         }
 
         textarea {
-            resize: vertical;
-            height: 80px;
+            resize: none;
+            height: 70px;
         }
 
-        button {
+        button.btn-submit {
             width: 100%;
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 12px;
+            padding: 14px;
             font-size: 16px;
             font-weight: 600;
-            border-radius: 6px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: opacity 0.2s, transform 0.1s;
         }
 
-        button:hover {
-            background-color: var(--primary-hover);
+        button.btn-submit:active {
+            transform: scale(0.99);
+            opacity: 0.9;
         }
 
         .history-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 10px;
             margin-bottom: 16px;
+        }
+
+        .history-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .total-badge {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--primary);
+            background: rgba(0, 113, 227, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
         }
 
         .task-list {
@@ -112,118 +168,123 @@
         }
 
         .task-item {
-            background: var(--card-bg);
+            background: rgba(120, 120, 128, 0.04);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 16px;
+            border-radius: 12px;
+            padding: 14px;
             position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .task-title-row {
             display: flex;
             justify-content: space-between;
-            font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 4px;
+            align-items: flex-start;
+            padding-right: 60px;
         }
 
-        .duration-badge {
-            color: var(--success);
-            background: #ecfdf5;
-            padding: 2px 8px;
-            border-radius: 12px;
+        .project-name {
+            font-weight: 600;
+            font-size: 16px;
+            word-break: break-word;
+        }
+
+        .duration {
             font-size: 14px;
+            font-weight: 600;
+            color: var(--success);
+            white-space: nowrap;
         }
 
         .task-meta {
-            font-size: 14px;
-            color: #6b7280;
-            margin-bottom: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin: 4px 0 8px 0;
         }
 
         .task-notes {
             font-size: 14px;
-            background: #f9fafb;
-            padding: 8px;
-            border-radius: 4px;
-            border-left: 3px solid var(--border);
-            font-style: italic;
+            background: rgba(120, 120, 128, 0.06);
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: var(--text-main);
+            word-break: break-word;
         }
 
         .delete-btn {
             position: absolute;
-            top: 16px;
-            right: 16px;
-            background: none;
-            color: #ef4444;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 69, 58, 0.1);
+            color: var(--danger);
             border: none;
-            padding: 0;
-            width: auto;
-            font-size: 14px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
             cursor: pointer;
-            font-weight: 500;
         }
-        .delete-btn:hover {
-            background: none;
-            text-decoration: underline;
+
+        .delete-btn:leading {
+            background: rgba(255, 69, 58, 0.2);
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Project Time Tracker</h1>
+    <h1>Sledilnik Časa</h1>
 
-    <!-- Log Form Card -->
     <div class="card">
         <form id="timeForm">
             <div class="form-group">
-                <label for="projectName">Project Name</label>
-                <input type="text" id="projectName" required placeholder="e.g., Client Server Migration">
+                <label for="projectName">Ime Projekta</label>
+                <input type="text" id="projectName" required placeholder="npr. Spletna stran za stranko">
             </div>
             <div class="form-group">
-                <label for="taskDate">Date</label>
+                <label for="taskDate">Datum</label>
                 <input type="date" id="taskDate" required>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="startTime">Start Time</label>
+                    <label for="startTime">Začetek</label>
                     <input type="time" id="startTime" required>
                 </div>
                 <div class="form-group">
-                    <label for="endTime">End Time</label>
+                    <label for="endTime">Konec</label>
                     <input type="time" id="endTime" required>
                 </div>
             </div>
             <div class="form-group">
-                <label for="notes">Additional Notes</label>
-                <textarea id="notes" placeholder="Describe the steps or components utilized..."></textarea>
+                <label for="notes">Opombe</label>
+                <textarea id="notes" placeholder="Dodatne podrobnosti o delu..."></textarea>
             </div>
-            <button type="submit">Log Project Session</button>
+            <button type="submit" class="btn-submit">Zapiši Delovni Čas</button>
         </form>
     </div>
 
-    <!-- History Card -->
     <div class="card">
         <div class="history-header">
-            <h2>Logged History</h2>
-            <div id="totalHours" style="font-weight: bold; color: var(--primary);">Total: 0.00 hrs</div>
+            <h2>Zgodovina</h2>
+            <div id="totalHours" class="total-badge">Skupaj: 0.00 ur</div>
         </div>
-        <div id="taskList" class="task-list">
-            <!-- Entries will append here dynamically -->
-        </div>
+        <div id="taskList" class="task-list"></div>
     </div>
 </div>
 
 <script>
-    // Set today's date default input value
+    // Set current date manually inside client context
     document.getElementById('taskDate').value = new Date().toISOString().split('T')[0];
 
     const timeForm = document.getElementById('timeForm');
     const taskListElement = document.getElementById('taskList');
     const totalHoursElement = document.getElementById('totalHours');
 
-    // Retrieve initial data array from storage or set blank
     let tasks = JSON.parse(localStorage.getItem('project_tasks')) || [];
 
     function calculateDuration(start, end) {
@@ -233,13 +294,18 @@
         let startTotalMinutes = (startHours * 60) + startMins;
         let endTotalMinutes = (endHours * 60) + endMins;
 
-        // If end time is past midnight (next day cross-over)
         if (endTotalMinutes < startTotalMinutes) {
-            endTotalMinutes += 24 * 60;
+            endTotalMinutes += 24 * 60; // Next-day rollover adjustment
         }
 
-        const diffMinutes = endTotalMinutes - startTotalMinutes;
-        return (diffMinutes / 60);
+        return (endTotalMinutes - startTotalMinutes) / 60;
+    }
+
+    function formatDateSlovenian(dateStr) {
+        if(!dateStr) return '';
+        const parts = dateStr.split('-');
+        if(parts.length !== 3) return dateStr;
+        return `${parts[2]}. ${parts[1]}. ${parts[0]}`;
     }
 
     function updateUI() {
@@ -247,8 +313,8 @@
         let globalTotalHours = 0;
 
         if (tasks.length === 0) {
-            taskListElement.innerHTML = '<p style="text-align:center; color:#9ca3af;">No project sessions logged yet.</p>';
-            totalHoursElement.innerText = 'Total: 0.00 hrs';
+            taskListElement.innerHTML = '<p style="text-align:center; color: var(--text-muted); font-size: 14px; margin: 20px 0;">Ni zabeleženih projektov.</p>';
+            totalHoursElement.innerText = 'Skupaj: 0.00 ur';
             return;
         }
 
@@ -260,19 +326,19 @@
             item.className = 'task-item';
             item.innerHTML = `
                 <div class="task-title-row">
-                    <span>${escapeHtml(task.projectName)}</span>
-                    <span class="duration-badge">${hours.toFixed(2)} hrs</span>
+                    <span class="project-name">${escapeHtml(task.projectName)}</span>
+                    <span class="duration">${hours.toFixed(2)} ur</span>
                 </div>
                 <div class="task-meta">
-                    <strong>Date:</strong> ${task.taskDate} | <strong>Timeline:</strong> ${task.startTime} to ${task.endTime}
+                    ${formatDateSlovenian(task.taskDate)} • ${task.startTime} do ${task.endTime}
                 </div>
                 ${task.notes ? `<div class="task-notes">${escapeHtml(task.notes)}</div>` : ''}
-                <button class="delete-btn" onclick="deleteTask(${index})">Remove</button>
+                <button class="delete-btn" onclick="deleteTask(${index})">Briši</button>
             `;
             taskListElement.appendChild(item);
         });
 
-        totalHoursElement.innerText = `Total: ${globalTotalHours.toFixed(2)} hrs`;
+        totalHoursElement.innerText = `Skupaj: ${globalTotalHours.toFixed(2)} ur`;
     }
 
     function escapeHtml(text) {
@@ -295,7 +361,6 @@
         tasks.push(newTask);
         localStorage.setItem('project_tasks', JSON.stringify(tasks));
         
-        // Reset specific UI fields
         document.getElementById('projectName').value = '';
         document.getElementById('notes').value = '';
         
@@ -303,13 +368,6 @@
     });
 
     window.deleteTask = function(index) {
-        tasks.splice(index, 1);
-        localStorage.setItem('project_tasks', JSON.stringify(tasks));
-        updateUI();
-    }
-
-    // Run initial display rendering loop
-    updateUI();
-</script>
-</body>
-</html>
+        if(confirm('Ali ste prepričani, da želite izbrisati ta vnos?')) {
+            tasks.splice(index, 1);
+            localStorage.setItem('project_tasks
