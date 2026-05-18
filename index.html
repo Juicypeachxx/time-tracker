@@ -7,6 +7,9 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="ikona.png">
+    <link rel="icon" type="image/png" href="ikona.png">
+    <link rel="shortcut icon" href="ikona.png">
     
     <style>
         :root {
@@ -497,8 +500,7 @@
                     <div class="form-group">
                         <label>Stranka</label>
                         <input type="text" id="clientNameInput" list="clientDatalist" required placeholder="Izberi iz seznama ali vpiši novo...">
-                        <datalist id="clientDatalist">
-                            </datalist>
+                        <datalist id="clientDatalist"></datalist>
                     </div>
                     
                     <div class="form-row">
@@ -686,12 +688,10 @@
             return [...new Set(months)].sort().reverse();
         }
 
-        // SPREMENJENO: Posodobljeno generiranje Datalista namesto starega Select-a
         function updateFiltersAndLists() {
             const activeTaskClients = tasks.map(t => t.clientName);
             const allUniqueClients = [...new Set([...clientDatabase, ...activeTaskClients])].filter(Boolean).sort();
             
-            // Osvežitev predlogov v vnosnem polju (Datalist)
             clientDatalist.innerHTML = '';
             clientDatabase.forEach(c => {
                 const opt = document.createElement('option');
@@ -808,7 +808,6 @@
             return d.innerHTML;
         }
 
-        // SPREMENJENO: Pametna oddaja z avtomatskim shranjevanjem novih strank
         timeForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const inputClientRaw = clientNameInput.value.trim();
@@ -818,7 +817,6 @@
                 return;
             }
 
-            // Pametno preverjanje: če stranke še ni v bazi, jo samodejno shranimo
             if (!clientDatabase.includes(inputClientRaw)) {
                 clientDatabase.push(inputClientRaw);
                 clientDatabase.sort();
