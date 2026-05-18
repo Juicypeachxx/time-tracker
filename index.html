@@ -153,7 +153,6 @@
             min-width: 0;
         }
 
-        /* POPRAVEK: Kontejner za časovno polje in gumb "Zdaj" */
         .time-input-container {
             display: flex;
             gap: 6px;
@@ -212,7 +211,6 @@
             opacity: 0.8;
         }
 
-        /* POPRAVEK: Stil za opcijski gumb "Zdaj" */
         button.btn-now {
             background-color: var(--input-bg);
             border: 1px solid var(--border);
@@ -223,10 +221,6 @@
             border-radius: 12px;
             height: 50px;
             white-space: nowrap;
-        }
-        
-        [data-theme="dark"] button.btn-now {
-            color: var(--accent);
         }
 
         button.btn-submit {
@@ -456,7 +450,7 @@
                 max-width: 1024px;
                 padding: 0 24px;
                 display: grid;
-                grid-template-columns: 440px 1fr; /* Malo razširjeno zaradi gumbov */
+                grid-template-columns: 440px 1fr;
                 gap: 28px;
                 align-items: start;
             }
@@ -502,8 +496,9 @@
                 <form id="timeForm">
                     <div class="form-group">
                         <label>Stranka</label>
-                        <select id="clientNameSelect" required>
-                            </select>
+                        <input type="text" id="clientNameInput" list="clientDatalist" required placeholder="Izberi iz seznama ali vpiši novo...">
+                        <datalist id="clientDatalist">
+                            </datalist>
                     </div>
                     
                     <div class="form-row">
@@ -604,7 +599,8 @@
         const totalHoursElement = document.getElementById('totalHours');
         const clientFilter = document.getElementById('clientFilter');
         const monthFilter = document.getElementById('monthFilter');
-        const clientNameSelect = document.getElementById('clientNameSelect');
+        const clientNameInput = document.getElementById('clientNameInput');
+        const clientDatalist = document.getElementById('clientDatalist');
         const managedClientList = document.getElementById('managedClientList');
         const newClientInput = document.getElementById('newClientInput');
         const accordionContainer = document.getElementById('settingsAccordion');
@@ -619,7 +615,6 @@
             "Julij", "Avgust", "September", "Oktober", "November", "December"
         ];
 
-        // NOVA FUNKCIJA: Pridobi in vpiše lokalen točen čas v formatu HH:MM
         function setCurrentTime(inputId) {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
@@ -691,31 +686,18 @@
             return [...new Set(months)].sort().reverse();
         }
 
+        // SPREMENJENO: Posodobljeno generiranje Datalista namesto starega Select-a
         function updateFiltersAndLists() {
             const activeTaskClients = tasks.map(t => t.clientName);
             const allUniqueClients = [...new Set([...clientDatabase, ...activeTaskClients])].filter(Boolean).sort();
             
-            const prevSelectedInputClient = clientNameSelect.value;
-            clientNameSelect.innerHTML = '';
-            
-            if (clientDatabase.length === 0) {
+            // Osvežitev predlogov v vnosnem polju (Datalist)
+            clientDatalist.innerHTML = '';
+            clientDatabase.forEach(c => {
                 const opt = document.createElement('option');
-                opt.value = "";
-                opt.innerText = "⚠️ Najprej dodaj stranko spodaj";
-                opt.disabled = true;
-                opt.selected = true;
-                clientNameSelect.appendChild(opt);
-            } else {
-                clientDatabase.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c;
-                    opt.innerText = c;
-                    clientNameSelect.appendChild(opt);
-                });
-                if (clientDatabase.includes(prevSelectedInputClient)) {
-                    clientNameSelect.value = prevSelectedInputClient;
-                }
-            }
+                opt.value = c;
+                clientDatalist.appendChild(opt);
+            });
             
             const prevSelectedFilterClient = clientFilter.value;
             clientFilter.innerHTML = '<option value="ALL">-- Vse stranke skupaj --</option>';
@@ -826,17 +808,25 @@
             return d.innerHTML;
         }
 
+        // SPREMENJENO: Pametna oddaja z avtomatskim shranjevanjem novih strank
         timeForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const selectedClient = clientNameSelect.value;
+            const inputClientRaw = clientNameInput.value.trim();
             
-            if (!selectedClient) {
-                alert('Prosimo, izberite stranko. Če je seznam prazen, jo dodajte v nastavitvah spodaj.');
+            if (!inputClientRaw) {
+                alert('Prosimo, vnesite ali izberite stranko.');
                 return;
+            }
+
+            // Pametno preverjanje: če stranke še ni v bazi, jo samodejno shranimo
+            if (!clientDatabase.includes(inputClientRaw)) {
+                clientDatabase.push(inputClientRaw);
+                clientDatabase.sort();
+                localStorage.setItem('client_database', JSON.stringify(clientDatabase));
             }
             
             const newTask = {
-                clientName: selectedClient,
+                clientName: inputClientRaw,
                 locationName: document.getElementById('locationName').value.trim(),
                 projectName: document.getElementById('projectName').value.trim(),
                 taskDate: document.getElementById('taskDate').value,
