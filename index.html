@@ -157,6 +157,33 @@
             min-width: 0;
         }
 
+        /* POSODOBLJENO: Stil za nov kombiniran vnos časov */
+        .time-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--input-bg);
+            border-radius: 12px;
+            padding: 0 8px;
+            height: 50px;
+            flex: 1;
+        }
+
+        .time-picker-wrapper input {
+            background: transparent;
+            text-align: center;
+            padding: 0;
+            height: 100%;
+            font-size: 16px;
+            border: none;
+        }
+
+        .time-separator {
+            font-weight: bold;
+            color: var(--text-main);
+            user-select: none;
+        }
+
         .time-input-container {
             display: flex;
             gap: 6px;
@@ -182,8 +209,7 @@
             padding: 14px;
         }
 
-        input[type="date"],
-        input[type="time"] {
+        input[type="date"] {
             display: flex;
             align-items: center;
             line-height: 50px; 
@@ -616,18 +642,37 @@
                         <div class="form-group">
                             <label>Začetek</label>
                             <div class="time-input-container">
-                                <input type="time" id="startTime" required>
-                                <button type="button" class="btn-now" onclick="setCurrentTimeRounded('startTime')">Zdaj</button>
+                                <div class="time-picker-wrapper">
+                                    <input type="text" id="startHour" list="hours24" placeholder="00" required maxlength="2" inputmode="numeric">
+                                    <span class="time-separator">:</span>
+                                    <input type="text" id="startMin" list="minutes15" placeholder="00" required maxlength="2" inputmode="numeric">
+                                </div>
+                                <button type="button" class="btn-now" onclick="setCurrentTimeRoundedCustom('startHour', 'startMin')">Zdaj</button>
                             </div>
                         </div>
                         <div class="form-group">
                             <label>Konec</label>
                             <div class="time-input-container">
-                                <input type="time" id="endTime" required>
-                                <button type="button" class="btn-now" onclick="setCurrentTimeRounded('endTime')">Zdaj</button>
+                                <div class="time-picker-wrapper">
+                                    <input type="text" id="endHour" list="hours24" placeholder="00" required maxlength="2" inputmode="numeric">
+                                    <span class="time-separator">:</span>
+                                    <input type="text" id="endMin" list="minutes15" placeholder="00" required maxlength="2" inputmode="numeric">
+                                </div>
+                                <button type="button" class="btn-now" onclick="setCurrentTimeRoundedCustom('endHour', 'endMin')">Zdaj</button>
                             </div>
                         </div>
                     </div>
+
+                    <datalist id="hours24">
+                        <option value="00"><option value="01"><option value="02"><option value="03"><option value="04">
+                        <option value="05"><option value="06"><option value="07"><option value="08"><option value="09">
+                        <option value="10"><option value="11"><option value="12"><option value="13"><option value="14">
+                        <option value="15"><option value="16"><option value="17"><option value="18"><option value="19">
+                        <option value="20"><option value="21"><option value="22"><option value="23">
+                    </datalist>
+                    <datalist id="minutes15">
+                        <option value="00"><option value="15"><option value="30"><option value="45">
+                    </datalist>
 
                     <div class="form-group">
                         <label>Opombe</label>
@@ -719,8 +764,8 @@
             "Julij", "Avgust", "September", "Oktober", "November", "December"
         ];
 
-        // Gumb "Zdaj" še naprej zaokrožuje na 15 minut navzgor
-        function setCurrentTimeRounded(inputId) {
+        // Gumb "Zdaj" zaokroži na 15 minut navzgor in izpiše čisto 24h obliko
+        function setCurrentTimeRoundedCustom(hId, mId) {
             const now = new Date();
             let hours = now.getHours();
             let minutes = now.getMinutes();
@@ -739,48 +784,52 @@
                 hours = 0;
             }
 
-            const strHours = String(hours).padStart(2, '0');
-            const strMinutes = String(minutes).padStart(2, '0');
-            document.getElementById(inputId).value = `${strHours}:${strMinutes}`;
+            document.getElementById(hId).value = String(hours).padStart(2, '0');
+            document.getElementById(mId).value = String(minutes).padStart(2, '0');
         }
 
-        // POSODOBLJENO: Funkcija, ki omogoča poljuben ročni vnos, ob kliku na puščice pa skoči za 15 minut
-        function setupSmartTimeStep(inputElement) {
-            inputElement.addEventListener('keydown', function(e) {
+        // Pametno klikanje s puščicami gor/dol znotraj polj za uro in minute
+        function setupSmartPickers(hId, mId) {
+            const hInput = document.getElementById(hId);
+            const mInput = document.getElementById(mId);
+
+            // Nastavitev privzetih vrednosti, če so prazne
+            hInput.addEventListener('blur', () => { if(hInput.value) hInput.value = String(Math.min(23, Math.max(0, parseInt(hInput.value, 10)))).padStart(2, '0'); });
+            mInput.addEventListener('blur', () => { if(mInput.value) mInput.value = String(Math.min(59, Math.max(0, parseInt(mInput.value, 10)))).padStart(2, '0'); });
+
+            hInput.addEventListener('keydown', (e) => {
                 if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                    e.preventDefault(); // Preprečimo privzeto obnašanje brskalnika (1 minuta)
+                    e.preventDefault();
+                    let current = parseInt(hInput.value, 10) || 0;
+                    current = (e.key === 'ArrowUp') ? current + 1 : current - 1;
+                    if (current > 23) current = 0;
+                    if (current < 0) current = 23;
+                    hInput.value = String(current).padStart(2, '0');
+                }
+            });
+
+            mInput.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    let current = parseInt(mInput.value, 10) || 0;
                     
-                    let val = inputElement.value;
-                    if (!val) val = "12:00";
-                    
-                    let [h, m] = val.split(':').map(Number);
-                    let totalMinutes = h * 60 + m;
-                    
-                    // Premik za 15 minut glede na pritisnjeno puščico
+                    // Skoči na najbližji 15-minutni interval
+                    let remainder = current % 15;
                     if (e.key === 'ArrowUp') {
-                        totalMinutes += 15;
+                        current = current + (15 - remainder);
                     } else {
-                        totalMinutes -= 15;
+                        current = remainder === 0 ? current - 15 : current - remainder;
                     }
-                    
-                    // Varovala za obseg dneva
-                    if (totalMinutes >= 1440) totalMinutes -= 1440;
-                    if (totalMinutes < 0) totalMinutes += 1440;
-                    
-                    let newH = Math.floor(totalMinutes / 60);
-                    let newM = totalMinutes % 60;
-                    
-                    inputElement.value = `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
-                    
-                    // Sprožimo 'input' dogodek, če kje poslušamo spremembe
-                    inputElement.dispatchEvent(new Event('input'));
+
+                    if (current >= 60) current = 0;
+                    if (current < 0) current = 45;
+                    mInput.value = String(current).padStart(2, '0');
                 }
             });
         }
 
-        // Aktiviramo pametno upravljanje puščic na obeh poljih
-        setupSmartTimeStep(document.getElementById('startTime'));
-        setupSmartTimeStep(document.getElementById('endTime'));
+        setupSmartPickers('startHour', 'startMin');
+        setupSmartPickers('endHour', 'endMin');
 
         function toggleAccordion() {
             accordionContainer.classList.toggle('active');
@@ -986,8 +1035,14 @@
             document.getElementById('locationName').value = targetTask.locationName || '';
             document.getElementById('projectName').value = targetTask.projectName;
             document.getElementById('taskDate').value = targetTask.taskDate;
-            document.getElementById('startTime').value = targetTask.startTime;
-            document.getElementById('endTime').value = targetTask.endTime;
+            
+            const [sH, sM] = targetTask.startTime.split(':');
+            const [eH, eM] = targetTask.endTime.split(':');
+            document.getElementById('startHour').value = sH;
+            document.getElementById('startMin').value = sM;
+            document.getElementById('endHour').value = eH;
+            document.getElementById('endMin').value = eM;
+            
             document.getElementById('notes').value = targetTask.notes || '';
 
             submitBtn.innerText = "Posodobi Delovni Čas";
@@ -1073,14 +1128,20 @@
                 clientDatabase.sort();
                 localStorage.setItem('client_database', JSON.stringify(clientDatabase));
             }
+
+            // Pridobivanje in formatiranje ur pred shranjevanjem
+            const sh = String(parseInt(document.getElementById('startHour').value, 10) || 0).padStart(2, '0');
+            const sm = String(parseInt(document.getElementById('startMin').value, 10) || 0).padStart(2, '0');
+            const eh = String(parseInt(document.getElementById('endHour').value, 10) || 0).padStart(2, '0');
+            const em = String(parseInt(document.getElementById('endMin').value, 10) || 0).padStart(2, '0');
             
             const taskData = {
                 clientName: inputClientRaw,
                 locationName: document.getElementById('locationName').value.trim(),
                 projectName: document.getElementById('projectName').value.trim(),
                 taskDate: document.getElementById('taskDate').value,
-                startTime: document.getElementById('startTime').value,
-                endTime: document.getElementById('endTime').value,
+                startTime: `${sh}:${sm}`,
+                endTime: `${eh}:${em}`,
                 notes: document.getElementById('notes').value.trim()
             };
 
