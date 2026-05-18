@@ -96,7 +96,6 @@
             transform: translateX(22px);
         }
 
-        /* STRUKTURA: Osnovna prilagoditev za mobilne naprave */
         .container {
             width: 100%;
             max-width: 500px;
@@ -154,6 +153,13 @@
             min-width: 0;
         }
 
+        /* POPRAVEK: Kontejner za časovno polje in gumb "Zdaj" */
+        .time-input-container {
+            display: flex;
+            gap: 6px;
+            width: 100%;
+        }
+
         input, textarea, select {
             width: 100%;
             height: 50px;
@@ -204,6 +210,23 @@
         button:active {
             transform: scale(0.98);
             opacity: 0.8;
+        }
+
+        /* POPRAVEK: Stil za opcijski gumb "Zdaj" */
+        button.btn-now {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 0 12px;
+            border-radius: 12px;
+            height: 50px;
+            white-space: nowrap;
+        }
+        
+        [data-theme="dark"] button.btn-now {
+            color: var(--accent);
         }
 
         button.btn-submit {
@@ -419,10 +442,6 @@
             height: auto;
         }
 
-        /* ==========================================================================
-           M1 iPAD AIR / TABLIČNA OPTIMIZACIJA (Zasloni širši od 760px)
-           ==========================================================================
-        */
         @media screen and (min-width: 768px) {
             .header {
                 max-width: 1024px;
@@ -430,19 +449,18 @@
             }
 
             .header h1 {
-                font-size: 32px; /* Večji napisi na iPadu */
+                font-size: 32px;
             }
 
             .container {
                 max-width: 1024px;
                 padding: 0 24px;
                 display: grid;
-                grid-template-columns: 420px 1fr; /* Leva kolona fiksna za vnos, desna se raztegne */
+                grid-template-columns: 440px 1fr; /* Malo razširjeno zaradi gumbov */
                 gap: 28px;
                 align-items: start;
             }
 
-            /* Stranska kolona ostane fiksna zgoraj ob skrolanju dolgih seznamov ur */
             .left-column {
                 position: sticky;
                 top: env(safe-area-inset-top);
@@ -450,10 +468,6 @@
 
             .filter-container {
                 margin-bottom: 20px;
-            }
-            
-            /* Prilagoditev filtrov na iPadu, da stojita drug ob drugem */
-            .filter-container {
                 display: flex;
                 gap: 16px;
             }
@@ -511,11 +525,17 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Začetek</label>
-                            <input type="time" id="startTime" required>
+                            <div class="time-input-container">
+                                <input type="time" id="startTime" required>
+                                <button type="button" class="btn-now" onclick="setCurrentTime('startTime')">Zdaj</button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Konec</label>
-                            <input type="time" id="endTime" required>
+                            <div class="time-input-container">
+                                <input type="time" id="endTime" required>
+                                <button type="button" class="btn-now" onclick="setCurrentTime('endTime')">Zdaj</button>
+                            </div>
                         </div>
                     </div>
 
@@ -598,6 +618,14 @@
             "Januar", "Februar", "Marec", "April", "Maj", "Junij",
             "Julij", "Avgust", "September", "Oktober", "November", "December"
         ];
+
+        // NOVA FUNKCIJA: Pridobi in vpiše lokalen točen čas v formatu HH:MM
+        function setCurrentTime(inputId) {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById(inputId).value = `${hours}:${minutes}`;
+        }
 
         function toggleAccordion() {
             accordionContainer.classList.toggle('active');
@@ -803,7 +831,7 @@
             const selectedClient = clientNameSelect.value;
             
             if (!selectedClient) {
-                alert('Prosimo, izberite stranko. Če je seznam pracen, jo dodajte v nastavitvah spodaj.');
+                alert('Prosimo, izberite stranko. Če je seznam prazen, jo dodajte v nastavitvah spodaj.');
                 return;
             }
             
