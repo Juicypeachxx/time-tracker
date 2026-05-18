@@ -8,6 +8,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     
+    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='180' height='180' rx='40' fill='%23007AFF'/><g transform='scale(1.3) translate(22, 22)' stroke='%23FFFFFF' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'><circle cx='50' cy='50' r='38'/><path d='M50 20 A30 30 0 0 1 80 50'/><path d='M88 40 A44 44 0 0 1 88 60'/><path d='M12 40 A44 44 0 0 0 12 60'/><line x1='50' y1='50' x2='50' y2='28'/><line x1='50' y1='50' x2='68' y2='38'/><path d='M15 15 L25 25 M85 15 L75 25' stroke-width='5'/><circle cx='80' cy='80' r='14' fill='%23007AFF' stroke='%23FFFFFF' stroke-width='5'/><path d='M74 80 L78 84 L86 74' stroke='%23FFFFFF' stroke-width='4'/></g></svg>">
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g stroke='%23007AFF' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'><circle cx='50' cy='50' r='38'/><path d='M50 20 A30 30 0 0 1 80 50'/><path d='M88 40 A44 44 0 0 1 88 60'/><path d='M12 40 A44 44 0 0 0 12 60'/><line x1='50' y1='50' x2='50' y2='28'/><line x1='50' y1='50' x2='68' y2='38'/><circle cx='80' cy='80' r='14' fill='%23F2F2F7' stroke='%23007AFF' stroke-width='5'/><path d='M74 80 L78 84 L86 74' stroke='%23007AFF' stroke-width='4'/></g></svg>">
+
     <style>
         :root {
             /* Svetla tema */
@@ -22,6 +26,8 @@
             --shadow: 0 4px 24px rgba(0,0,0,0.06);
             --success: #34C759;
             --danger: #FF3B30;
+            --icon-color: #007AFF;
+            --icon-check-bg: #F2F2F7;
         }
 
         [data-theme="dark"] {
@@ -34,6 +40,8 @@
             --border: rgba(255, 255, 255, 0.1);
             --input-bg: rgba(255, 255, 255, 0.08);
             --shadow: 0 4px 24px rgba(0,0,0,0.4);
+            --icon-color: #0A84FF;
+            --icon-check-bg: #1C1C1E;
         }
 
         * {
@@ -63,6 +71,22 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .title-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Vektorska ikona v glavi aplikacije */
+        .header-icon {
+            width: 32px;
+            height: 32px;
+        }
+        .header-icon svg {
+            width: 100%;
+            height: 100%;
         }
 
         .header h1 {
@@ -485,7 +509,21 @@
 <body data-theme="light">
 
     <div class="header">
-        <h1>Sledilnik Časa</h1>
+        <div class="title-container">
+            <div class="header-icon">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="38" stroke="var(--icon-color)" stroke-width="6" stroke-linecap="round"/>
+                    <path d="M50 20 A30 30 0 0 1 80 50" stroke="var(--icon-color)" stroke-width="6" stroke-linecap="round"/>
+                    <path d="M88 40 A44 44 0 0 1 88 60" stroke="var(--icon-color)" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M12 40 A44 44 0 0 0 12 60" stroke="var(--icon-color)" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="50" y1="50" x2="50" y2="28" stroke="var(--icon-color)" stroke-width="6" stroke-linecap="round"/>
+                    <line x1="50" y1="50" x2="68" y2="38" stroke="var(--icon-color)" stroke-width="6" stroke-linecap="round"/>
+                    <circle cx="80" cy="80" r="14" fill="var(--icon-check-bg)" stroke="var(--icon-color)" stroke-width="5"/>
+                    <path d="M74 80 L78 84 L86 74" stroke="var(--icon-color)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h1>Sledilnik Časa</h1>
+        </div>
         <div class="theme-switch" id="themeToggle" onclick="toggleTheme()"></div>
     </div>
 
@@ -686,12 +724,10 @@
             return [...new Set(months)].sort().reverse();
         }
 
-        // SPREMENJENO: Posodobljeno generiranje Datalista namesto starega Select-a
         function updateFiltersAndLists() {
             const activeTaskClients = tasks.map(t => t.clientName);
             const allUniqueClients = [...new Set([...clientDatabase, ...activeTaskClients])].filter(Boolean).sort();
             
-            // Osvežitev predlogov v vnosnem polju (Datalist)
             clientDatalist.innerHTML = '';
             clientDatabase.forEach(c => {
                 const opt = document.createElement('option');
@@ -808,7 +844,6 @@
             return d.innerHTML;
         }
 
-        // SPREMENJENO: Pametna oddaja z avtomatskim shranjevanjem novih strank
         timeForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const inputClientRaw = clientNameInput.value.trim();
@@ -818,7 +853,6 @@
                 return;
             }
 
-            // Pametno preverjanje: če stranke še ni v bazi, jo samodejno shranimo
             if (!clientDatabase.includes(inputClientRaw)) {
                 clientDatabase.push(inputClientRaw);
                 clientDatabase.sort();
