@@ -912,19 +912,16 @@ item.innerHTML = `
                    <div class="task-client">${escape(t.clientName)}</div>
                    <div class="task-main-info">
                        <div class="task-project">${escape(t.projectName)}</div>
-                        <div class="task-duration">${dur.toFixed(2)} ur</div>
+                       <div class="task-duration">${dur.toFixed(2)} ur</div>
                    </div>
                    ${t.locationName ? `<div class="task-location">📍 ${escape(t.locationName)}</div>` : ''}
-                    <div class="task-meta">${formatDateSlo(t.taskDate)} • ${t.startTime} - ${t.endTime}</div>
-                    
-                    <div class="task-meta">
-                        <span>${formatDateSlo(t.taskDate)}</span>
-                        <span>•</span>
-                        <span>${t.startTime} - ${t.endTime}</span>
-                        <span>•</span>
-                        <span class="task-duration">${dur.toFixed(2)} ur</span>
-                    </div>
-                    
+                   
+                   <div class="task-meta">
+                       <span>🗓️ ${formatDateSlo(t.taskDate)}</span>
+                       <span>•</span>
+                       <span>⏰ ${t.startTime} - ${t.endTime}</span>
+                   </div>
+                   
                    ${t.notes ? `<div class="task-notes">${escape(t.notes)}</div>` : ''}
                    
                    <div class="task-actions">
@@ -934,7 +931,7 @@ item.innerHTML = `
                `;
 taskListElement.appendChild(item);
 });
-
+        
 totalHoursElement.innerText = `${total.toFixed(2)} ur`;
 }
 
