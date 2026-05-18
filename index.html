@@ -8,22 +8,18 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     
-    <link rel="apple-touch-icon" href="ikona.png">
-    
-    <link rel="icon" type="image/png" href="ikona.png">
-
     <style>
         :root {
-            /* Svetla tema (Privzeto) */
+            /* Svetla tema */
             --bg-main: #F2F2F7;
-            --bg-card: rgba(255, 255, 255, 0.8);
+            --bg-card: rgba(255, 255, 255, 0.82);
             --text-main: #1C1C1E;
             --text-muted: #8E8E93;
             --accent: #007AFF;
-            --border: rgba(0, 0, 0, 0.1);
-            --input-bg: rgba(0, 0, 0, 0.05);
+            --border: rgba(0, 0, 0, 0.08);
+            --input-bg: rgba(0, 0, 0, 0.04);
             --card-blur: blur(20px);
-            --shadow: 0 4px 24px rgba(0,0,0,0.08);
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
             --success: #34C759;
             --danger: #FF3B30;
         }
@@ -36,7 +32,7 @@
             --text-muted: #8E8E93;
             --accent: #0A84FF;
             --border: rgba(255, 255, 255, 0.1);
-            --input-bg: rgba(255, 255, 255, 0.1);
+            --input-bg: rgba(255, 255, 255, 0.08);
             --shadow: 0 4px 24px rgba(0,0,0,0.4);
         }
 
@@ -104,6 +100,15 @@
             width: 100%;
             max-width: 500px;
             padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .left-column, .right-column {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .card {
@@ -146,6 +151,12 @@
         .form-row .form-group {
             flex: 1;
             min-width: 0;
+        }
+
+        .time-input-container {
+            display: flex;
+            gap: 6px;
+            width: 100%;
         }
 
         input, textarea, select {
@@ -198,6 +209,18 @@
         button:active {
             transform: scale(0.98);
             opacity: 0.8;
+        }
+
+        button.btn-now {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 0 12px;
+            border-radius: 12px;
+            height: 50px;
+            white-space: nowrap;
         }
 
         button.btn-submit {
@@ -359,7 +382,7 @@
             font-weight: 600;
             font-size: 15px;
             box-shadow: var(--shadow);
-            margin-top: 25px;
+            margin-top: 10px;
             user-select: none;
         }
 
@@ -412,6 +435,51 @@
             padding: 4px 8px;
             height: auto;
         }
+
+        @media screen and (min-width: 768px) {
+            .header {
+                max-width: 1024px;
+                padding: 40px 24px 20px 24px;
+            }
+
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .container {
+                max-width: 1024px;
+                padding: 0 24px;
+                display: grid;
+                grid-template-columns: 440px 1fr;
+                gap: 28px;
+                align-items: start;
+            }
+
+            .left-column {
+                position: sticky;
+                top: env(safe-area-inset-top);
+            }
+
+            .filter-container {
+                margin-bottom: 20px;
+                display: flex;
+                gap: 16px;
+            }
+            
+            .filter-container .form-group {
+                flex: 1;
+                margin-bottom: 0 !important;
+            }
+
+            .total-display h2 {
+                font-size: 24px;
+            }
+
+            .total-badge {
+                padding: 8px 18px;
+                font-size: 16px;
+            }
+        }
     </style>
 </head>
 <body data-theme="light">
@@ -423,91 +491,102 @@
 
     <div class="container">
         
-        <div class="card">
-            <form id="timeForm">
-                <div class="form-group">
-                    <label>Stranka</label>
-                    <select id="clientNameSelect" required>
-                        </select>
-                </div>
-                
-                <div class="form-row">
+        <div class="left-column">
+            <div class="card">
+                <form id="timeForm">
                     <div class="form-group">
-                        <label>Lokacija</label>
-                        <input type="text" id="locationName" placeholder="Lokacija">
-                    </div>
-                    <div class="form-group">
-                        <label>Projekt</label>
-                        <input type="text" id="projectName" required placeholder="Projekt">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Datum</label>
-                    <input type="date" id="taskDate" required>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Začetek</label>
-                        <input type="time" id="startTime" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Konec</label>
-                        <input type="time" id="endTime" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Opombe</label>
-                    <textarea id="notes" placeholder="Podrobnosti dela..."></textarea>
-                </div>
-
-                <button type="submit" class="btn-submit">Zapiši Delovni Čas</button>
-            </form>
-        </div>
-
-        <div class="filter-container">
-            <div class="form-group">
-                <label>Filter po stranki</label>
-                <select id="clientFilter">
-                    <option value="ALL">-- Vse stranke skupaj --</option>
-                </select>
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-                <label>Filter po mesecu</label>
-                <select id="monthFilter">
-                    <option value="ALL">-- Vsi meseci --</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="total-display">
-            <h2>Zgodovina</h2>
-            <div id="totalHours" class="total-badge">0.00 ur</div>
-        </div>
-
-        <div id="taskList"></div>
-
-        <div class="accordion-container" id="settingsAccordion">
-            <div class="accordion-header" onclick="toggleAccordion()">
-                <span>⚙️ Nastavitve in upravljanje strank</span>
-                <span class="accordion-icon">▶</span>
-            </div>
-            
-            <div class="accordion-content">
-                <div class="card" style="margin-bottom: 0;">
-                    <h3>📁 Baza Strank</h3>
-                    <div class="form-row" style="margin-bottom: 0;">
-                        <div class="form-group" style="margin-bottom: 0; flex: 2;">
-                            <input type="text" id="newClientInput" placeholder="Ime nove stranke / podjetja">
-                        </div>
-                        <button type="button" class="btn-secondary" onclick="addNewClient()">Dodaj</button>
+                        <label>Stranka</label>
+                        <input type="text" id="clientNameInput" list="clientDatalist" required placeholder="Izberi iz seznama ali vpiši novo...">
+                        <datalist id="clientDatalist">
+                            </datalist>
                     </div>
                     
-                    <div class="client-list-manage" id="managedClientList"></div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Lokacija</label>
+                            <input type="text" id="locationName" placeholder="Lokacija">
+                        </div>
+                        <div class="form-group">
+                            <label>Projekt</label>
+                            <input type="text" id="projectName" required placeholder="Projekt">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Datum</label>
+                        <input type="date" id="taskDate" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Začetek</label>
+                            <div class="time-input-container">
+                                <input type="time" id="startTime" required>
+                                <button type="button" class="btn-now" onclick="setCurrentTime('startTime')">Zdaj</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Konec</label>
+                            <div class="time-input-container">
+                                <input type="time" id="endTime" required>
+                                <button type="button" class="btn-now" onclick="setCurrentTime('endTime')">Zdaj</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Opombe</label>
+                        <textarea id="notes" placeholder="Podrobnosti dela..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit">Zapiši Delovni Čas</button>
+                </form>
+            </div>
+
+            <div class="accordion-container" id="settingsAccordion">
+                <div class="accordion-header" onclick="toggleAccordion()">
+                    <span>⚙️ Nastavitve in upravljanje strank</span>
+                    <span class="accordion-icon">▶</span>
+                </div>
+                
+                <div class="accordion-content">
+                    <div class="card" style="margin-bottom: 0; margin-top: 10px;">
+                        <h3>📁 Baza Strank</h3>
+                        <div class="form-row" style="margin-bottom: 0;">
+                            <div class="form-group" style="margin-bottom: 0; flex: 2;">
+                                <input type="text" id="newClientInput" placeholder="Ime nove stranke / podjetja">
+                            </div>
+                            <button type="button" class="btn-secondary" onclick="addNewClient()">Dodaj</button>
+                        </div>
+                        
+                        <div class="client-list-manage" id="managedClientList"></div>
+                    </div>
                 </div>
             </div>
+        </div>
+
+        <div class="right-column">
+            <div class="filter-container">
+                <div class="form-group">
+                    <label>Filter po stranki</label>
+                    <select id="clientFilter">
+                        <option value="ALL">-- Vse stranke skupaj --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Filter po mesecu</label>
+                    <select id="monthFilter">
+                        <option value="ALL">-- Vsi meseci --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="total-display">
+                <h2>Zgodovina vnosov</h2>
+                <div id="totalHours" class="total-badge">0.00 ur</div>
+            </div>
+
+            <div id="taskList"></div>
         </div>
 
     </div>
@@ -520,7 +599,8 @@
         const totalHoursElement = document.getElementById('totalHours');
         const clientFilter = document.getElementById('clientFilter');
         const monthFilter = document.getElementById('monthFilter');
-        const clientNameSelect = document.getElementById('clientNameSelect');
+        const clientNameInput = document.getElementById('clientNameInput');
+        const clientDatalist = document.getElementById('clientDatalist');
         const managedClientList = document.getElementById('managedClientList');
         const newClientInput = document.getElementById('newClientInput');
         const accordionContainer = document.getElementById('settingsAccordion');
@@ -534,6 +614,13 @@
             "Januar", "Februar", "Marec", "April", "Maj", "Junij",
             "Julij", "Avgust", "September", "Oktober", "November", "December"
         ];
+
+        function setCurrentTime(inputId) {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById(inputId).value = `${hours}:${minutes}`;
+        }
 
         function toggleAccordion() {
             accordionContainer.classList.toggle('active');
@@ -599,31 +686,18 @@
             return [...new Set(months)].sort().reverse();
         }
 
+        // SPREMENJENO: Posodobljeno generiranje Datalista namesto starega Select-a
         function updateFiltersAndLists() {
             const activeTaskClients = tasks.map(t => t.clientName);
             const allUniqueClients = [...new Set([...clientDatabase, ...activeTaskClients])].filter(Boolean).sort();
             
-            const prevSelectedInputClient = clientNameSelect.value;
-            clientNameSelect.innerHTML = '';
-            
-            if (clientDatabase.length === 0) {
+            // Osvežitev predlogov v vnosnem polju (Datalist)
+            clientDatalist.innerHTML = '';
+            clientDatabase.forEach(c => {
                 const opt = document.createElement('option');
-                opt.value = "";
-                opt.innerText = "⚠️ Najprej dodaj stranko spodaj";
-                opt.disabled = true;
-                opt.selected = true;
-                clientNameSelect.appendChild(opt);
-            } else {
-                clientDatabase.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c;
-                    opt.innerText = c;
-                    clientNameSelect.appendChild(opt);
-                });
-                if (clientDatabase.includes(prevSelectedInputClient)) {
-                    clientNameSelect.value = prevSelectedInputClient;
-                }
-            }
+                opt.value = c;
+                clientDatalist.appendChild(opt);
+            });
             
             const prevSelectedFilterClient = clientFilter.value;
             clientFilter.innerHTML = '<option value="ALL">-- Vse stranke skupaj --</option>';
@@ -734,10 +808,25 @@
             return d.innerHTML;
         }
 
+        // SPREMENJENO: Pametna oddaja z avtomatskim shranjevanjem novih strank
         timeForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            const inputClientRaw = clientNameInput.value.trim();
+            
+            if (!inputClientRaw) {
+                alert('Prosimo, vnesite ali izberite stranko.');
+                return;
+            }
+
+            // Pametno preverjanje: če stranke še ni v bazi, jo samodejno shranimo
+            if (!clientDatabase.includes(inputClientRaw)) {
+                clientDatabase.push(inputClientRaw);
+                clientDatabase.sort();
+                localStorage.setItem('client_database', JSON.stringify(clientDatabase));
+            }
+            
             const newTask = {
-                clientName: clientNameSelect.value,
+                clientName: inputClientRaw,
                 locationName: document.getElementById('locationName').value.trim(),
                 projectName: document.getElementById('projectName').value.trim(),
                 taskDate: document.getElementById('taskDate').value,
