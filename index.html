@@ -356,29 +356,25 @@
             margin-bottom: 2px;
         }
 
-        /* POPRAVLJENO: Več odmika na desni strani, da se tekst nikoli ne zaleti v gumbe */
         .task-main-info {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            padding-right: 85px; 
+            padding-right: 95px; 
         }
 
         .task-project {
             font-size: 17px;
             font-weight: 600;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             word-break: break-word;
         }
 
-        /* POPRAVLJENO: Trajanje znotraj vrstice z meta podatki */
         .task-duration {
             font-weight: 700;
             color: var(--success);
-            background-color: rgba(52, 199, 89, 0.12);
-            padding: 2px 6px;
-            border-radius: 6px;
-            display: inline-block;
+            white-space: nowrap;
+            padding-left: 10px;
         }
 
         .task-location {
@@ -394,11 +390,6 @@
         .task-meta {
             font-size: 13px;
             color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin-top: 2px;
         }
 
         .task-notes {
@@ -626,14 +617,14 @@
                             <label>Začetek</label>
                             <div class="time-input-container">
                                 <input type="time" id="startTime" required>
-                                <button type="button" class="btn-now" onclick="setCurrentTime('startTime')">Zdaj</button>
+                                <button type="button" class="btn-now" onclick="setCurrentTimeRounded('startTime')">Zdaj</button>
                             </div>
                         </div>
                         <div class="form-group">
                             <label>Konec</label>
                             <div class="time-input-container">
                                 <input type="time" id="endTime" required>
-                                <button type="button" class="btn-now" onclick="setCurrentTime('endTime')">Zdaj</button>
+                                <button type="button" class="btn-now" onclick="setCurrentTimeRounded('endTime')">Zdaj</button>
                             </div>
                         </div>
                     </div>
@@ -728,12 +719,68 @@
             "Julij", "Avgust", "September", "Oktober", "November", "December"
         ];
 
-        function setCurrentTime(inputId) {
+        // Gumb "Zdaj" še naprej zaokrožuje na 15 minut navzgor
+        function setCurrentTimeRounded(inputId) {
             const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById(inputId).value = `${hours}:${minutes}`;
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+
+            const remainder = minutes % 15;
+            if (remainder !== 0) {
+                minutes += (15 - remainder);
+            }
+
+            if (minutes === 60) {
+                minutes = 0;
+                hours += 1;
+            }
+
+            if (hours === 24) {
+                hours = 0;
+            }
+
+            const strHours = String(hours).padStart(2, '0');
+            const strMinutes = String(minutes).padStart(2, '0');
+            document.getElementById(inputId).value = `${strHours}:${strMinutes}`;
         }
+
+        // POSODOBLJENO: Funkcija, ki omogoča poljuben ročni vnos, ob kliku na puščice pa skoči za 15 minut
+        function setupSmartTimeStep(inputElement) {
+            inputElement.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    e.preventDefault(); // Preprečimo privzeto obnašanje brskalnika (1 minuta)
+                    
+                    let val = inputElement.value;
+                    if (!val) val = "12:00";
+                    
+                    let [h, m] = val.split(':').map(Number);
+                    let totalMinutes = h * 60 + m;
+                    
+                    // Premik za 15 minut glede na pritisnjeno puščico
+                    if (e.key === 'ArrowUp') {
+                        totalMinutes += 15;
+                    } else {
+                        totalMinutes -= 15;
+                    }
+                    
+                    // Varovala za obseg dneva
+                    if (totalMinutes >= 1440) totalMinutes -= 1440;
+                    if (totalMinutes < 0) totalMinutes += 1440;
+                    
+                    let newH = Math.floor(totalMinutes / 60);
+                    let newM = totalMinutes % 60;
+                    
+                    inputElement.value = `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
+                    
+                    // Sprožimo 'input' dogodek, če kje poslušamo spremembe
+                    inputElement.dispatchEvent(new Event('input'));
+                }
+            });
+        }
+
+        // Aktiviramo pametno upravljanje puščic na obeh poljih
+        setupSmartTimeStep(document.getElementById('startTime'));
+        setupSmartTimeStep(document.getElementById('endTime'));
 
         function toggleAccordion() {
             accordionContainer.classList.toggle('active');
@@ -906,16 +953,11 @@
                     <div class="task-client">${escape(t.clientName)}</div>
                     <div class="task-main-info">
                         <div class="task-project">${escape(t.projectName)}</div>
+                        <div class="task-duration">${dur.toFixed(2)} ur</div>
                     </div>
                     ${t.locationName ? `<div class="task-location">📍 ${escape(t.locationName)}</div>` : ''}
                     
-                    <div class="task-meta">
-                        <span>${formatDateSlo(t.taskDate)}</span>
-                        <span>•</span>
-                        <span>${t.startTime} - ${t.endTime}</span>
-                        <span>•</span>
-                        <span class="task-duration">${dur.toFixed(2)} ur</span>
-                    </div>
+                    <div class="task-meta">${formatDateSlo(t.taskDate)} • ${t.startTime} - ${t.endTime}</div>
                     
                     ${t.notes ? `<div class="task-notes">${escape(t.notes)}</div>` : ''}
                     
